@@ -1,0 +1,3 @@
+test-client-server-openssl/app/sslecho
+test-client-server-openssl/app/*.o
+
