@@ -1,4 +1,27 @@
 #include "tls_attest_ext.h"
+#include<string.h>
+
+static bool verify_attestation(const unsigned char* in, size_t inlen){
+    // TODO: calculate evidence using library or get precalculated evidence
+     
+    // TODO: compare evidence from server in more convenient way
+    
+    int result = strcmp(in, "TEST_ATTESTATION");
+    if(result == 0)
+        return true;
+    return false;
+}
+
+static bool get_attestation(const unsigned char **out, size_t *outlen){
+    // TODO: get evidence through library that contacts kernel module(libvirt)
+
+    *out = "TEST_ATTESTATION";
+    *outlen = strlen(*out);
+
+    return true;
+    
+}
+
 
 static int attestation_client_ext_add_cb(SSL *s, unsigned int ext_type,
                                         unsigned int context,
@@ -11,8 +34,6 @@ static int attestation_client_ext_add_cb(SSL *s, unsigned int ext_type,
     switch (ext_type) {
         case 65280:
             printf(" - attestation_client_ext_add_cb from client called!\n");
-            //memcpy(*out, client_message, sizeof(client_message));
-            //*outlen = strlen(*out) * sizeof(char);
             break;
         default:
             break;
@@ -26,7 +47,6 @@ static void  attestation_client_ext_free_cb(SSL *s, unsigned int ext_type,
                                           void *add_arg)
 {
     printf(" - attestation_client_ext_free_cb from client called!\n");
-    //free((void*)out);
 }
 
 static int  attestation_client_ext_parse_cb(SSL *s, unsigned int ext_type,
@@ -37,7 +57,8 @@ static int  attestation_client_ext_parse_cb(SSL *s, unsigned int ext_type,
                                           void *parse_arg)
 {
     printf(" - attestation_client_ext_parse_cb from client called!\n");
-    printf("=== Message from server: %s ===\n", in);
+    verify_attestation(in,inlen);
+    printf("=== ATTESTATION EXTENXION: Message from server: %s ===\n", in);
     return 1;
 }
 
@@ -54,8 +75,8 @@ static int attestation_server_ext_add_cb(SSL *s, unsigned int ext_type,
     switch (ext_type) {
         case 65280:
             printf(" - attestation_server_ext_add_cb from server called!\n");
-            *out = "*** ATTESTATION: This is where the server will send you the attestation! ***\0";
-            *outlen = strlen(*out) * sizeof(char);
+            get_attestation(out, outlen);
+            printf("=== ATTESTATION EXTENXION: Sending message: %s ===\n", *out);
             break;
         default:
             break;

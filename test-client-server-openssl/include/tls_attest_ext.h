@@ -45,6 +45,9 @@ static int  attestation_server_ext_parse_cb(SSL *s, unsigned int ext_type,
                                           size_t chainidx, int *al,
                                           void *parse_arg);
 
+static bool get_attestation(const unsigned char **out, size_t *outlen);
+static bool verify_attestation(const unsigned char *in, size_t inlen);
+
 int add_attestation_extension(SSL_CTX* ctx, bool is_server);
 
 #endif
