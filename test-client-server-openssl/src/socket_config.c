@@ -7,9 +7,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-const int server_port = 4433;
-
-int create_socket(bool isServer)
+int create_socket(bool isServer, int port)
 {
     int s;
     int optval = 1;
@@ -23,7 +21,7 @@ int create_socket(bool isServer)
 
     if (isServer) {
         addr.sin_family = AF_INET;
-        addr.sin_port = htons(server_port);
+        addr.sin_port = htons(port);
         addr.sin_addr.s_addr = INADDR_ANY;
 
         /* Reuse the address; good for quick restarts */

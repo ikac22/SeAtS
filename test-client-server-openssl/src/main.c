@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <openssl/ssl.h>
@@ -32,10 +33,10 @@ static volatile bool    server_running = true;
 
 static void usage(void)
 {
-    printf("Usage: sslecho s\n");
+    printf("Usage: sslecho s port\n");
     printf("       --or--\n");
-    printf("       sslecho c ip\n");
-    printf("       c=client, s=server, ip=dotted ip of server\n");
+    printf("       sslecho c ip port\n");
+    printf("       c=client, s=server, ip=dotted ip of server, port=port of the server\n");
     exit(EXIT_FAILURE);
 }
 
@@ -60,6 +61,9 @@ int main(int argc, char **argv)
     int rxlen;
 
     char *rem_server_ip = NULL;
+    char *rem_server_port = NULL;
+    int target_port = 0; 
+
 
     struct sockaddr_in addr;
     unsigned int addr_len = sizeof(addr);
@@ -72,18 +76,22 @@ int main(int argc, char **argv)
     __TIME__);
 
     /* Need to know if client or server */
-    if (argc < 2) {
+    if (argc < 3) {
         usage();
         /* NOTREACHED */
     }
     isServer = (argv[1][0] == 's') ? true : false;
     /* If client get remote server address (could be 127.0.0.1) */
     if (!isServer) {
-        if (argc != 3) {
+        if (argc != 4) {
             usage();
             /* NOTREACHED */
         }
         rem_server_ip = argv[2];
+        target_port = atoi(argv[3]);
+    }
+    else{
+        target_port = atoi(argv[2]);
     }
 
     /* Create context used by both client and server */
@@ -92,13 +100,13 @@ int main(int argc, char **argv)
     /* If server */
     if (isServer) {
 
-        printf("We are the server on port: %d\n\n", server_port);
+        printf("We are the server on port: %d\n\n", target_port);
 
         /* Configure server context with appropriate key files */
         configure_server_context(ssl_ctx);
 
         /* Create server socket; will bind with server port and listen */
-        server_skt = create_socket(true);
+        server_skt = create_socket(true, target_port);
 
         /*
          * Loop to accept clients.
@@ -178,11 +186,11 @@ int main(int argc, char **argv)
         configure_client_context(ssl_ctx);
 
         /* Create "bare" socket */
-        client_skt = create_socket(false);
+        client_skt = create_socket(false, target_port);
         /* Set up connect address */
         addr.sin_family = AF_INET;
         inet_pton(AF_INET, rem_server_ip, &addr.sin_addr.s_addr);
-        addr.sin_port = htons(server_port);
+        addr.sin_port = htons(target_port);
         /* Do TCP connect with server */
         if (connect(client_skt, (struct sockaddr*) &addr, sizeof(addr)) != 0) {
             perror("Unable to TCP connect to server");
