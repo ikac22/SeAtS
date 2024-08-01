@@ -12,20 +12,16 @@
 #include <signal.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#if !defined(OPENSSL_SYS_WINDOWS)
+
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#else
-#include <winsock.h>
-#endif
 
-static const int server_port = 4433;
+#include "common.h"
+#include "ssl_config.h"
+#include "socket_config.h"
 
-typedef unsigned char   bool;
-#define true            1
-#define false           0
 
 /*
  * This flag won't be useful until both accept/read (TCP & SSL) methods
@@ -33,210 +29,6 @@ typedef unsigned char   bool;
  */
 static volatile bool    server_running = true;
 
-
-// =============================================================================
-
-/* CALLBACK FUNCTIONS FOR TLS EXTENSION - aleksa */
-
-// CLIENT CALLBACKS
-static int attestation_client_ext_add_cb(SSL *s, unsigned int ext_type,
-                                        unsigned int context,
-                                        const unsigned char **out,
-                                        size_t *outlen, X509 *x,
-                                        size_t chainidx, int *al,
-                                        void *add_arg)
-{
-    //*out = "CLIENT MESSAGE: Hello there handsome ;)\0";
-    switch (ext_type) {
-        case 65280:
-            printf(" - attestation_client_ext_add_cb from client called!\n");
-            //memcpy(*out, client_message, sizeof(client_message));
-            //*outlen = strlen(*out) * sizeof(char);
-            break;
-        default:
-            break;
-    }
-    return 1;
-}
-
-static void  attestation_client_ext_free_cb(SSL *s, unsigned int ext_type,
-                                          unsigned int context,
-                                          const unsigned char *out,
-                                          void *add_arg)
-{
-    printf(" - attestation_client_ext_free_cb from client called!\n");
-    //free((void*)out);
-}
-
-static int  attestation_client_ext_parse_cb(SSL *s, unsigned int ext_type,
-                                          unsigned int context,
-                                          const unsigned char *in,
-                                          size_t inlen, X509 *x,
-                                          size_t chainidx, int *al,
-                                          void *parse_arg)
-{
-    printf(" - attestation_client_ext_parse_cb from client called!\n");
-    printf("=== Message from server: %s ===\n", in);
-    return 1;
-}
-
-
-
-// SERVER CALLBACKS
-static int attestation_server_ext_add_cb(SSL *s, unsigned int ext_type,
-                                        unsigned int context,
-                                        const unsigned char **out,
-                                        size_t *outlen, X509 *x,
-                                        size_t chainidx, int *al,
-                                        void *add_arg)
-{
-    switch (ext_type) {
-        case 65280:
-            printf(" - attestation_server_ext_add_cb from server called!\n");
-            *out = "*** ATTESTATION: This is where the server will send you the attestation! ***\0";
-            *outlen = strlen(*out) * sizeof(char);
-            break;
-        default:
-            break;
-    }
-    return 1;
-}
-
-static void  attestation_server_ext_free_cb(SSL *s, unsigned int ext_type,
-                                          unsigned int context,
-                                          const unsigned char *out,
-                                          void *add_arg)
-{
-    printf(" - attestation_server_ext_free_cb from server called\n");
-}
-
-static int  attestation_server_ext_parse_cb(SSL *s, unsigned int ext_type,
-                                          unsigned int context,
-                                          const unsigned char *in,
-                                          size_t inlen, X509 *x,
-                                          size_t chainidx, int *al,
-                                          void *parse_arg)
-{
-    printf(" - attestation_server_ext_parse_cb from server called!\n");
-    return 1;
-}
-
-// =============================================================================
-
-
-static int create_socket(bool isServer)
-{
-    int s;
-    int optval = 1;
-    struct sockaddr_in addr;
-
-    s = socket(AF_INET, SOCK_STREAM, 0);
-    if (s < 0) {
-        perror("Unable to create socket");
-        exit(EXIT_FAILURE);
-    }
-
-    if (isServer) {
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(server_port);
-        addr.sin_addr.s_addr = INADDR_ANY;
-
-        /* Reuse the address; good for quick restarts */
-        if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval))
-                < 0) {
-            perror("setsockopt(SO_REUSEADDR) failed");
-            exit(EXIT_FAILURE);
-        }
-
-        if (bind(s, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
-            perror("Unable to bind");
-            exit(EXIT_FAILURE);
-        }
-
-        if (listen(s, 1) < 0) {
-            perror("Unable to listen");
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    return s;
-}
-
-static SSL_CTX* create_context(bool isServer)
-{
-    const SSL_METHOD *method;
-    SSL_CTX *ctx;
-
-    if (isServer)
-        method = TLS_server_method();
-    else
-        method = TLS_client_method();
-
-    ctx = SSL_CTX_new(method);
-    if (ctx == NULL) {
-        perror("Unable to create SSL context");
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    return ctx;
-}
-
-static void configure_server_context(SSL_CTX *ctx)
-{
-    /* Set the key and cert */
-    if (SSL_CTX_use_certificate_chain_file(ctx, "certs/server/server.crt") <= 0) {
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    if (SSL_CTX_use_PrivateKey_file(ctx, "certs/server/server.key", SSL_FILETYPE_PEM) <= 0) {
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    int result = SSL_CTX_add_custom_ext(ctx, 
-                                        65280,
-                                        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO,
-                                        attestation_server_ext_add_cb, 
-                                        attestation_server_ext_free_cb, 
-                                        NULL, 
-                                        attestation_server_ext_parse_cb, 
-                                        NULL);
-
-    printf("Server extension adding result: %d\n", result);
-
-}
-
-static void configure_client_context(SSL_CTX *ctx)
-{
-    /*
-     * Configure the client to abort the handshake if certificate verification
-     * fails
-     */
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
-    /*
-     * In a real application you would probably just use the default system certificate trust store and call:
-     *     SSL_CTX_set_default_verify_paths(ctx);
-     * In this demo though we are using a self-signed certificate, so the client must trust it directly.
-     */
-    if (!SSL_CTX_load_verify_locations(ctx, "certs/ca/ca.crt", NULL)) {
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    int result = SSL_CTX_add_custom_ext(ctx, 
-                                        65280,
-                                        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO,
-                                        attestation_client_ext_add_cb, 
-                                        attestation_client_ext_free_cb, 
-                                        NULL, 
-                                        attestation_client_ext_parse_cb, 
-                                        NULL);
-
-    printf("Client extension adding result: %d\n", result);
-
-}
 
 static void usage(void)
 {
@@ -270,16 +62,10 @@ int main(int argc, char **argv)
     char *rem_server_ip = NULL;
 
     struct sockaddr_in addr;
-#if defined(OPENSSL_SYS_CYGWIN) || defined(OPENSSL_SYS_WINDOWS)
-    int addr_len = sizeof(addr);
-#else
     unsigned int addr_len = sizeof(addr);
-#endif
 
-#if !defined (OPENSSL_SYS_WINDOWS)
     /* ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
     signal(SIGPIPE, SIG_IGN);
-#endif
 
     /* Splash */
     printf("\nsslecho : Simple Echo Client/Server : %s : %s\n\n", __DATE__,
