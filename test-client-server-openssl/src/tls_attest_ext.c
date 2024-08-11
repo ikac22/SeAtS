@@ -168,6 +168,8 @@ static int get_attestation_report(attestation_report* ar){
 
     sprintf(cmd, "xdd %s", ATTESTATION_FILE_PATH);
     
+    system(cmd);
+
     free(cmd);
 
     return 1;
@@ -176,10 +178,10 @@ static int get_attestation_report(attestation_report* ar){
 #define print_char_member(obj, field)   printf("%-30s: %02x\n", #field, obj->field)
 #define print_int_member(obj, field)    printf("%-30s: %08x\n", #field, obj->field)
 #define print_long_member(obj, field)   printf("%-30s: %016lx\n", #field, obj->field)
-#define print_string_member(obj, field) printf("%-30s: ", #field); print_string_hex(obj->field); printf("\n")
+#define print_string_member(obj, field, len) printf("%-30s: ", #field); print_string_hex(obj->field, len); printf("\n")
 
-void print_string_hex(const unsigned char* s){
-    while(*s)
+void print_string_hex(const unsigned char* s, int len){
+    for(int i = 0; i < len; i++)
         printf("%02x", (unsigned int) *s++);
 }
 
@@ -189,24 +191,24 @@ static void print_attestation_report_hex(attestation_report* ar){
     print_int_member(ar, version);
     print_int_member(ar, guest_svn);
     print_long_member(ar, policy);
-    print_string_member(ar, family_id);
-    print_string_member(ar, image_id);
+    print_string_member(ar, family_id, 16);
+    print_string_member(ar, image_id, 16);
     print_int_member(ar, vmpl);
     print_int_member(ar, signature_algo);
     print_long_member(ar, current_tcb);
     print_long_member(ar, platform_info);
     print_int_member(ar, signig_flags);
     print_int_member(ar, reseved1);
-    print_string_member(ar, report_data);
-    print_string_member(ar, measurement);
-    print_string_member(ar, host_provided_data);
-    print_string_member(ar, id_key_digest);
-    print_string_member(ar, author_key_digest);
-    print_string_member(ar, report_id);
-    print_string_member(ar, report_id_ma);
+    print_string_member(ar, report_data, 64);
+    print_string_member(ar, measurement, 48);
+    print_string_member(ar, host_provided_data, 32);
+    print_string_member(ar, id_key_digest, 48);
+    print_string_member(ar, author_key_digest, 48);
+    print_string_member(ar, report_id, 32);
+    print_string_member(ar, report_id_ma, 32);
     print_long_member(ar, reported_tcb); 
-    print_string_member(ar, reserved2);
-    print_string_member(ar, chip_id);
+    print_string_member(ar, reserved2, 24);
+    print_string_member(ar, chip_id, 64);
     print_long_member(ar, committed_tcb);
     print_char_member(ar, current_build);
     print_char_member(ar, current_minor);
@@ -217,8 +219,8 @@ static void print_attestation_report_hex(attestation_report* ar){
     print_char_member(ar, committed_major);
     print_char_member(ar, reserved4);
     print_long_member(ar, launch_tcb);
-    print_string_member(ar, reserved5);
-    print_string_member(ar, signature);
+    print_string_member(ar, reserved5, 168);
+    print_string_member(ar, signature, 512);
 }
 
 void print_attestation_report_member_offsets(){
