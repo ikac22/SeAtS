@@ -24,8 +24,8 @@ static bool verify_attestation(const unsigned char* in, size_t inlen){
 static bool get_attestation(const unsigned char **out, size_t *outlen){
     // TODO: get evidence through library that contacts kernel module(libvirt)
     attestation_report ar;
-    // get_attestation_report(&ar);
-    // print_attestation_report_hex(&ar);
+    get_attestation_report(&ar);
+    print_attestation_report_hex(&ar);
 
     *out = "TEST_ATTESTATION";
     *outlen = strlen(*out);

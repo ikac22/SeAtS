@@ -29,3 +29,5 @@ Run the script
 - `./script.sh`
 
 #### Run test using sslecho executable `app/sslecho`
+
+#### WHEN MAKING CONNECTION TO from host to vm the ip/domain must be "localhost"(this is the domaint that stands in cert file)(not "127.0.0.1") OR CLIENT WON'T VERIFY CERTS CORRECTLY
