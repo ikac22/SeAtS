@@ -166,7 +166,7 @@ static int get_attestation_report(attestation_report* ar){
 
     printf("----------------------- ATTESTATION FILE -----------------------");
 
-    sprintf(cmd, "xdd %s", ATTESTATION_FILE_PATH);
+    sprintf(cmd, "xxd %s", ATTESTATION_FILE_PATH);
     
     system(cmd);
 
