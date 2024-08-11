@@ -72,6 +72,8 @@ int main(int argc, char **argv)
     /* ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
     signal(SIGPIPE, SIG_IGN);
 
+    setbuf(stdout, NULL);
+
     /* Splash */
     printf("\nsslecho : Simple Echo Client/Server : %s : %s\n\n", __DATE__,
     __TIME__);
