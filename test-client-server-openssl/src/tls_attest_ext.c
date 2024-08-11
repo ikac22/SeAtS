@@ -1,5 +1,14 @@
 #include "tls_attest_ext.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include<string.h>
+
+#define ATTESTATION_FILE_PATH "/dev/shm/attestation.bin"
+#define REPORT_DATA_FILE_PATH "/dev/shm/random.bin"
+#define CMD_STRING_ADDITIONAL_LENGTH 13
+
+static const char *snpguest_path=NULL;
 
 static bool verify_attestation(const unsigned char* in, size_t inlen){
     // TODO: calculate evidence using library or get precalculated evidence
@@ -14,6 +23,9 @@ static bool verify_attestation(const unsigned char* in, size_t inlen){
 
 static bool get_attestation(const unsigned char **out, size_t *outlen){
     // TODO: get evidence through library that contacts kernel module(libvirt)
+    attestation_report ar;
+    get_attestation_report(&ar);
+    print_attestation_report_hex(&ar);
 
     *out = "TEST_ATTESTATION";
     *outlen = strlen(*out);
@@ -58,7 +70,7 @@ static int  attestation_client_ext_parse_cb(SSL *s, unsigned int ext_type,
 {
     printf(" - attestation_client_ext_parse_cb from client called!\n");
     verify_attestation(in,inlen);
-    printf("=== ATTESTATION EXTENXION: Message from server: %s ===\n", in);
+    printf("=== ATTESTATION EXTENXION (%lu): Message from server: %s ===\n", sizeof(attestation_report), in);
     return 1;
 }
 
@@ -103,10 +115,11 @@ static int  attestation_server_ext_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-int add_attestation_extension(SSL_CTX *ctx, bool is_server){
+int add_attestation_extension(SSL_CTX *ctx, bool is_server, const char* snpguest_path_t){
     unsigned int id = 65280; 
     unsigned int flags = SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO;
 
+    snpguest_path = snpguest_path_t;
     if (is_server){
         return SSL_CTX_add_custom_ext(ctx, 
                                         id,
@@ -127,5 +140,159 @@ int add_attestation_extension(SSL_CTX *ctx, bool is_server){
                                         NULL, 
                                         attestation_client_ext_parse_cb, 
                                         NULL);
+    }
+}
+
+
+static int get_attestation_report(attestation_report* ar){
+    uint8_t cmd_len = strlen(snpguest_path) + 1 
+                      + sizeof(ATTESTATION_FILE_PATH) 
+                      + sizeof(REPORT_DATA_FILE_PATH) 
+                      + CMD_STRING_ADDITIONAL_LENGTH; 
+
+    char *cmd=malloc(cmd_len);
+
+    FILE *att_file;
+
+    sprintf(cmd, "%s %s %s --random\n", snpguest_path, ATTESTATION_FILE_PATH, REPORT_DATA_FILE_PATH);
+    
+    system(cmd);
+
+    att_file = fopen(ATTESTATION_FILE_PATH, "rb");
+
+    fread((char*)ar, sizeof(attestation_report), 1, att_file);
+
+    fclose(att_file);
+
+    printf("----------------------- ATTESTATION FILE -----------------------");
+
+    sprintf(cmd, "xdd %s", ATTESTATION_FILE_PATH);
+    
+    free(cmd);
+
+    return 1;
+}
+
+#define print_char_member(obj, field)   printf("%-30s: %02x\n", #field, obj->field)
+#define print_int_member(obj, field)    printf("%-30s: %08x\n", #field, obj->field)
+#define print_long_member(obj, field)   printf("%-30s: %016lx\n", #field, obj->field)
+#define print_string_member(obj, field) printf("%-30s: ", #field); print_string_hex(obj->field); printf("\n")
+
+void print_string_hex(const unsigned char* s){
+    while(*s)
+        printf("%02x", (unsigned int) *s++);
+}
+
+// For the purpose of checking the reading
+static void print_attestation_report_hex(attestation_report* ar){
+    printf("----------------------- READ DATA USING STRUCT -----------------------");
+    print_int_member(ar, version);
+    print_int_member(ar, guest_svn);
+    print_long_member(ar, policy);
+    print_string_member(ar, family_id);
+    print_string_member(ar, image_id);
+    print_int_member(ar, vmpl);
+    print_int_member(ar, signature_algo);
+    print_long_member(ar, current_tcb);
+    print_long_member(ar, platform_info);
+    print_int_member(ar, signig_flags);
+    print_int_member(ar, reseved1);
+    print_string_member(ar, report_data);
+    print_string_member(ar, measurement);
+    print_string_member(ar, host_provided_data);
+    print_string_member(ar, id_key_digest);
+    print_string_member(ar, author_key_digest);
+    print_string_member(ar, report_id);
+    print_string_member(ar, report_id_ma);
+    print_long_member(ar, reported_tcb); 
+    print_string_member(ar, reserved2);
+    print_string_member(ar, chip_id);
+    print_long_member(ar, committed_tcb);
+    print_char_member(ar, current_build);
+    print_char_member(ar, current_minor);
+    print_char_member(ar, current_major);
+    print_char_member(ar, reserved3);
+    print_char_member(ar, committed_build);
+    print_char_member(ar, committed_minor);
+    print_char_member(ar, committed_major);
+    print_char_member(ar, reserved4);
+    print_long_member(ar, launch_tcb);
+    print_string_member(ar, reserved5);
+    print_string_member(ar, signature);
+}
+
+void print_attestation_report_member_offsets(){
+    unsigned long offsets[] = {
+        offsetof(attestation_report, version),
+        offsetof(attestation_report, guest_svn),
+        offsetof(attestation_report, policy),
+        offsetof(attestation_report,  family_id),
+        offsetof(attestation_report,  image_id),
+        offsetof(attestation_report, vmpl),
+        offsetof(attestation_report, signature_algo),
+        offsetof(attestation_report, current_tcb),
+        offsetof(attestation_report, platform_info),
+        offsetof(attestation_report, signig_flags),
+        offsetof(attestation_report, reseved1),
+        offsetof(attestation_report,  report_data),
+        offsetof(attestation_report,  measurement),
+        offsetof(attestation_report,  host_provided_data), 
+        offsetof(attestation_report,  id_key_digest),
+        offsetof(attestation_report,  author_key_digest),
+        offsetof(attestation_report,  report_id),
+        offsetof(attestation_report,  report_id_ma),
+        offsetof(attestation_report, reported_tcb), 
+        offsetof(attestation_report,  reserved2),
+        offsetof(attestation_report, committed_tcb),
+        offsetof(attestation_report,  current_build),
+        offsetof(attestation_report,  current_minor),
+        offsetof(attestation_report,  current_major),
+        offsetof(attestation_report,  reserved3),
+        offsetof(attestation_report,  committed_build),
+        offsetof(attestation_report,  committed_minor),
+        offsetof(attestation_report,  committed_major),
+        offsetof(attestation_report,  reserved4),
+        offsetof(attestation_report, launch_tcb),
+        offsetof(attestation_report,  reserved5),
+        offsetof(attestation_report,  signature)
+    }; 
+
+    const char* names[] = {
+        "version",
+        "guest_svn",
+        "policy",
+        "family_id",
+        "image_id",
+        "vmpl",
+        "signature_algo",
+        "current_tcb",
+        "platform_info",
+        "signig_flags",
+        "reseved1",
+        "report_data",
+        "measurement",
+        "host_provided_data", 
+        "id_key_digest",
+        "author_key_digest",
+        "report_id",
+        "report_id_ma",
+        "reported_tcb", 
+        "reserved2",
+        "committed_tcb",
+        "current_build",
+        "current_minor",
+        "current_major",
+        "reserved3",
+        "committed_build",
+        "committed_minor",
+        "committed_major",
+        "reserved4",
+        "launch_tcb",
+        "reserved5",
+        "signature"
+    }; 
+
+    for(int i = 0; i < 32; i++){
+       printf("%s: %lx\n", names[i], offsets[i]);  
     }
 }

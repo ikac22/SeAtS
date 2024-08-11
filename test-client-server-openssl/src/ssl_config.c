@@ -28,7 +28,7 @@ SSL_CTX* create_context(bool isServer)
     return ctx;
 }
 
-void configure_server_context(SSL_CTX *ctx)
+void configure_server_context(SSL_CTX *ctx, const char* snpguest_path)
 {
     /* Set the key and cert */
     if (SSL_CTX_use_certificate_chain_file(ctx, "certs/server/server.crt") <= 0) {
@@ -41,7 +41,7 @@ void configure_server_context(SSL_CTX *ctx)
         exit(EXIT_FAILURE);
     }
 
-    int result = add_attestation_extension(ctx, true);
+    int result = add_attestation_extension(ctx, true, snpguest_path);
     printf("Server extension adding result: %d\n", result);
 
 
@@ -64,6 +64,6 @@ void configure_client_context(SSL_CTX *ctx)
         exit(EXIT_FAILURE);
     }
  
-    int result = add_attestation_extension(ctx, false);
+    int result = add_attestation_extension(ctx, false, NULL);
     printf("Client extension adding result: %d\n", result);
 }
