@@ -154,7 +154,7 @@ static int get_attestation_report(attestation_report* ar){
 
     FILE *att_file;
 
-    sprintf(cmd, "%s %s %s --random\n", snpguest_path, ATTESTATION_FILE_PATH, REPORT_DATA_FILE_PATH);
+    sprintf(cmd, "%s report %s %s --random\n", snpguest_path, ATTESTATION_FILE_PATH, REPORT_DATA_FILE_PATH);
     
     system(cmd);
 
