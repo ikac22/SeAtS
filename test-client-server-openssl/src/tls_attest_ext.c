@@ -9,26 +9,26 @@
 #define CMD_STRING_ADDITIONAL_LENGTH 13
 
 static const char *snpguest_path=NULL;
+static bool DEBUG = 0;
 
 static bool verify_attestation(const unsigned char* in, size_t inlen){
-    // TODO: calculate evidence using library or get precalculated evidence
-     
-    // TODO: compare evidence from server in more convenient way
+
+    attestation_report* t = (attestation_report*)in;
     
-    int result = strcmp(in, "TEST_ATTESTATION");
-    if(result == 0)
-        return true;
-    return false;
+    print_attestation_report_hex(t);
+
+    return true;
 }
 
 static bool get_attestation(const unsigned char **out, size_t *outlen){
-    // TODO: get evidence through library that contacts kernel module(libvirt)
-    attestation_report ar;
-    get_attestation_report(&ar);
-    print_attestation_report_hex(&ar);
 
-    *out = "TEST_ATTESTATION";
-    *outlen = strlen(*out);
+    *out = malloc(sizeof(attestation_report));
+
+    get_attestation_report((attestation_report*)*out);
+        
+    print_attestation_report_hex((attestation_report*)*out);
+
+    *outlen = sizeof(attestation_report);
 
     return true;
     
@@ -164,16 +164,18 @@ static int get_attestation_report(attestation_report* ar){
 
     fclose(att_file);
 
-    printf("----------------------- ATTESTATION FILE -----------------------");
-
-    sprintf(cmd, "xxd %s", ATTESTATION_FILE_PATH);
-    
-    system(cmd);
+    if(DEBUG){
+        printf("----------------------- ATTESTATION FILE -----------------------");
+        sprintf(cmd, "xxd %s", ATTESTATION_FILE_PATH);
+        system(cmd);
+    }
 
     free(cmd);
 
     return 1;
 }
+
+//// FOR DEBUG PURPOSES
 
 #define print_char_member(obj, field)   printf("%-30s: %02x\n", #field, obj->field)
 #define print_int_member(obj, field)    printf("%-30s: %08x\n", #field, obj->field)
