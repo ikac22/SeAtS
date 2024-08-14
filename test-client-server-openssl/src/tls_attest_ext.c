@@ -2,14 +2,16 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include<string.h>
+#include <string.h>
 
 #define ATTESTATION_FILE_PATH "/dev/shm/attestation.bin"
 #define REPORT_DATA_FILE_PATH "/dev/shm/random.bin"
 #define CMD_STRING_ADDITIONAL_LENGTH 13
 
 static const char *snpguest_path=NULL;
+static const char *snpmeasure_start="scripts/snp_measurement_command.sh > prefered_measurement.txt";
 static bool DEBUG = 0;
+bool attestation_extension_present = false;
 
 static bool verify_attestation(const unsigned char* in, size_t inlen){
 
@@ -26,12 +28,12 @@ static bool get_attestation(const unsigned char **out, size_t *outlen){
 
     get_attestation_report((attestation_report*)*out);
         
+    
     print_attestation_report_hex((attestation_report*)*out);
 
     *outlen = sizeof(attestation_report);
 
-    return true;
-    
+    return true; 
 }
 
 
@@ -42,7 +44,6 @@ static int attestation_client_ext_add_cb(SSL *s, unsigned int ext_type,
                                         size_t chainidx, int *al,
                                         void *add_arg)
 {
-    //*out = "CLIENT MESSAGE: Hello there handsome ;)\0";
     switch (ext_type) {
         case 65280:
             printf(" - attestation_client_ext_add_cb from client called!\n");
@@ -68,6 +69,7 @@ static int  attestation_client_ext_parse_cb(SSL *s, unsigned int ext_type,
                                           size_t chainidx, int *al,
                                           void *parse_arg)
 {
+    attestation_extension_present=true;
     printf(" - attestation_client_ext_parse_cb from client called!\n");
     verify_attestation(in,inlen);
     printf("=== ATTESTATION EXTENXION (%lu): Message from server: %s ===\n", sizeof(attestation_report), in);
@@ -143,6 +145,14 @@ int add_attestation_extension(SSL_CTX *ctx, bool is_server, const char* snpguest
     }
 }
 
+static int verify_measurement(){
+
+    return true;
+}
+
+static int verify_certs(){
+    return false;
+}
 
 static int get_attestation_report(attestation_report* ar){
     uint8_t cmd_len = strlen(snpguest_path) + 1 

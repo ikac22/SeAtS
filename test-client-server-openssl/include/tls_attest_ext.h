@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include "common.h"
 
+extern bool attestation_extension_present;
 
 typedef struct attestation_report_struct{
     uint32_t version;

@@ -22,6 +22,7 @@
 #include "common.h"
 #include "ssl_config.h"
 #include "socket_config.h"
+#include "tls_attest_ext.h"
 
 
 /*
@@ -217,7 +218,10 @@ int main(int argc, char **argv)
 
         /* Now do SSL connect with server */
         if (SSL_connect(ssl) == 1) {
-
+            if(!attestation_extension_present){
+                printf("------ ATTESTATION EXTENSION NOT PRESENT ------\n");
+                goto exit;
+            }
             printf("SSL connection to server successful\n\n");
 
             /* Loop to send input from keyboard */
