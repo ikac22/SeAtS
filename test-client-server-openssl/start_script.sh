@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# != 1 ]; then
+if [ $# -ne 1 ]; then
 	echo "Not enought arguments."
 	echo "$0 <s | c>"
 	echo "	s - server"
