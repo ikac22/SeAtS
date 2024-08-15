@@ -5,14 +5,15 @@ if [ $# != 1 ]; then
 	echo "$0 <s | c>"
 	echo "	s - server"
 	echo "	c - client"
+	exit
 fi
 
 PATH=$PATH:$(pwd)/bin/
 
-if [ $1 == 's']; then
+if [ "$1" == 's']; then
 	./ssl_echo s 7002 
 fi
 
-if [ $1 == 'c']; then
+if [ "$1" == 'c']; then
 	./ssl_echo c localhost 7020
 fi
