@@ -1,7 +1,0 @@
-
-sslecho : Simple Echo Client/Server : Aug 11 2024 : 18:34:48
-
-Usage: sslecho s port snpguest_path
-       --or--
-       sslecho c ip port
-       c=client, s=server, ip=dotted ip of server, port=port of the server, snpguest_path=absolute path to snpguest tool

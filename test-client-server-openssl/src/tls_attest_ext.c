@@ -4,34 +4,186 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ATTESTATION_FILE_PATH "/dev/shm/attestation.bin"
-#define REPORT_DATA_FILE_PATH "/dev/shm/random.bin"
+#define SR_ATTESTATION_FILE_PATH "/dev/shm/attestation.bin"
+#define SR_REPORT_DATA_FILE_PATH "/dev/shm/random.bin"
+#define SR_CERTS_PATH "/dev/shm/certs"
+#define SR_CERT_BLOB_FILE_PATH "/dev/shm/certs.blob"
+
+#define CL_CALCULATE_MEASUREMENT_SCRIPT_PATH  "snp_measurement_command.sh"
+#define CL_CALCULATED_ATTESTATION_FILE_PATH "prefered_measurement.txt"
+#define CL_CERTS_PATH "certs"
+#define CL_ATTESTATION_FILE_PATH "attestation.bin"
+#define CL_CERT_BLOB_FILE_PATH "certs.blob"
+
+#define SNPGUEST_REPORT_CMD "snpguest report "
+#define SNPGUEST_VERIFY_CERTS_CMD "snpguest verify certs"
+#define SNPGUEST_VERIFY_ATTESTATION_CMD "snpguest verify attestation"
+#define SNPGUEST_CERTIFICATES_CMD "snpguest certificates"
+#define SNPHOST_EXPORT_CERTS_CMD "snphost export"
+#define SNPHOST_IMPORT_CERTS_CMD "snphost import"
+
+
 #define CMD_STRING_ADDITIONAL_LENGTH 13
 
-static const char *snpguest_path=NULL;
-static const char *snpmeasure_start="scripts/snp_measurement_command.sh > prefered_measurement.txt";
+// COMMANDS TO RUN ON SERVER
+static const char *snpguest_report_cmd = SNPGUEST_REPORT_CMD " " SR_ATTESTATION_FILE_PATH " " SR_REPORT_DATA_FILE_PATH " --random";
+static const char *snphost_import_cmd = SNPHOST_IMPORT_CERTS_CMD " " SR_CERT_BLOB_FILE_PATH;
+static const char *snpguest_certificates_cmd = SNPGUEST_CERTIFICATES_CMD " " SR_CERTS_PATH;
+static bool CERTS_LOADED = false;
+
+// COMMANDS TO RUN ON CLIENT
+static const char *snpmeasure_cmd = CL_CALCULATE_MEASUREMENT_SCRIPT_PATH " > " CL_CALCULATED_ATTESTATION_FILE_PATH;
+static const char *snpguest_certs_cmd = SNPGUEST_VERIFY_CERTS_CMD " " CL_CERTS_PATH;
+static const char *snpguest_attestation_cmd = SNPGUEST_VERIFY_ATTESTATION_CMD " " CL_CERTS_PATH " " CL_ATTESTATION_FILE_PATH; 
+static const char *snphost_export_cmd = SNPHOST_EXPORT_CERTS_CMD " " CL_CERT_BLOB_FILE_PATH " " CL_CERTS_PATH; 
+
 static bool DEBUG = 0;
+
 bool attestation_extension_present = false;
 
-static bool verify_attestation(const unsigned char* in, size_t inlen){
+static int verify_measurement(char* measurement){
+    char calc_measurement[48];
 
-    attestation_report* t = (attestation_report*)in;
-    
-    print_attestation_report_hex(t);
+    system(snpmeasure_cmd);
+ 
+    FILE *measurement_file;
+
+    measurement_file = fopen(CL_CALCULATED_ATTESTATION_FILE_PATH, "rb");
+
+    fread((char*)calc_measurement, 48, 1, measurement_file);
+
+    if (memcmp(calc_measurement, measurement, 48)){
+        return false;
+    }
+
+    fclose(measurement_file);
 
     return true;
 }
 
-static bool get_attestation(const unsigned char **out, size_t *outlen){
+static int verify_sev_snp_certs(){ return !system(snpguest_certs_cmd); }
 
-    *out = malloc(sizeof(attestation_report));
+static int verify_attestation_signature() { return !system(snpguest_attestation_cmd); }
 
-    get_attestation_report((attestation_report*)*out);
-        
+static int save_attestation(attestation_report *ar){
+    FILE* att_file = fopen(CL_ATTESTATION_FILE_PATH, "wb");
+
+    fwrite(ar, sizeof(attestation_report), 1, att_file);
+
+    fclose(att_file);
+
+    return 1;
+}
+
+static int save_cert_blob(const unsigned char* certs_blob, size_t length){
+    FILE* cert_file = fopen(CL_CERT_BLOB_FILE_PATH, "wb");
     
-    print_attestation_report_hex((attestation_report*)*out);
+    fwrite(certs_blob, length, 1, cert_file);
 
-    *outlen = sizeof(attestation_report);
+    fclose(cert_file);
+
+    return 1;
+}
+
+static bool verify_attestation(const unsigned char* in, size_t inlen){
+    attestation_report* ar = (attestation_report*)in;
+
+    const unsigned char* cb = in + sizeof(attestation_report);
+    size_t cb_size = inlen - sizeof(attestation_report);
+
+    save_attestation(ar);
+
+    save_cert_blob(cb, cb_size);     
+
+    if (!verify_sev_snp_certs()){
+        printf("PROVIDED CERTIFICATES INVALID!\n");
+        return false;
+    }
+
+    if (!verify_attestation_signature()){
+        printf("ATTESTATION SIGNATURE INVALID!\n");
+        return false;
+    } 
+
+    if (!verify_measurement(ar->measurement)){
+        printf("MEASUREMENT INVALID!\n");
+        return false;
+    }
+    return true;
+}
+
+static int load_cert_blob(char **cert_blob_buff, size_t* bufflen){
+    FILE *file;
+	char *buffer;
+	unsigned long fileLen;
+
+	//Open file
+	file = fopen(SR_CERT_BLOB_FILE_PATH, "rb");
+	if (!file)
+	{
+		fprintf(stderr, "Unable to open file %s", SR_CERT_BLOB_FILE_PATH);
+		return false;
+	}
+	
+	//Get file length
+	fseek(file, 0, SEEK_END);
+	fileLen=ftell(file);
+	fseek(file, 0, SEEK_SET);
+
+	//Allocate memory
+	buffer=(char *)malloc(fileLen+1);
+	if (!buffer)
+	{
+		fprintf(stderr, "Memory error!");
+                                fclose(file);
+		return false;
+	}
+
+	//Read file contents into buffer
+	fread(buffer, fileLen, 1, file);
+	fclose(file);
+
+    *bufflen=fileLen;
+    *cert_blob_buff = buffer;
+    
+    return true; 
+}
+
+static int get_attestation_report(attestation_report* ar){
+    FILE *att_file;
+ 
+    system(snpguest_report_cmd);
+
+    att_file = fopen(SR_ATTESTATION_FILE_PATH, "rb");
+
+    fread((char*)ar, sizeof(attestation_report), 1, att_file);
+
+    fclose(att_file);
+
+    // if(DEBUG){
+    //     printf("----------------------- ATTESTATION FILE -----------------------");
+    //     sprintf(cmd, "xxd %s", SR_ATTESTATION_FILE_PATH);
+    //     system(cmd);
+    // }
+
+    // free(cmd);
+
+    return 1;
+}
+
+static bool get_attestation(const unsigned char **out, size_t *outlen){
+    char *cert_blob_buff = NULL;
+    size_t cert_blob_buff_len = 0;
+    
+    load_cert_blob(&cert_blob_buff, &cert_blob_buff_len);
+
+    *out = malloc(sizeof(attestation_report) + cert_blob_buff_len);
+
+    get_attestation_report((attestation_report*)*out); 
+
+    memcpy((void*)(*out + sizeof(attestation_report)), cert_blob_buff, cert_blob_buff_len);
+    
+    *outlen = sizeof(attestation_report) + cert_blob_buff_len;
 
     return true; 
 }
@@ -117,11 +269,10 @@ static int  attestation_server_ext_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-int add_attestation_extension(SSL_CTX *ctx, bool is_server, const char* snpguest_path_t){
+int add_attestation_extension(SSL_CTX *ctx, bool is_server){
     unsigned int id = 65280; 
     unsigned int flags = SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO;
 
-    snpguest_path = snpguest_path_t;
     if (is_server){
         return SSL_CTX_add_custom_ext(ctx, 
                                         id,
@@ -143,46 +294,6 @@ int add_attestation_extension(SSL_CTX *ctx, bool is_server, const char* snpguest
                                         attestation_client_ext_parse_cb, 
                                         NULL);
     }
-}
-
-static int verify_measurement(){
-
-    return true;
-}
-
-static int verify_certs(){
-    return false;
-}
-
-static int get_attestation_report(attestation_report* ar){
-    uint8_t cmd_len = strlen(snpguest_path) + 1 
-                      + sizeof(ATTESTATION_FILE_PATH) 
-                      + sizeof(REPORT_DATA_FILE_PATH) 
-                      + CMD_STRING_ADDITIONAL_LENGTH; 
-
-    char *cmd=malloc(cmd_len);
-
-    FILE *att_file;
-
-    sprintf(cmd, "%s report %s %s --random\n", snpguest_path, ATTESTATION_FILE_PATH, REPORT_DATA_FILE_PATH);
-    
-    system(cmd);
-
-    att_file = fopen(ATTESTATION_FILE_PATH, "rb");
-
-    fread((char*)ar, sizeof(attestation_report), 1, att_file);
-
-    fclose(att_file);
-
-    if(DEBUG){
-        printf("----------------------- ATTESTATION FILE -----------------------");
-        sprintf(cmd, "xxd %s", ATTESTATION_FILE_PATH);
-        system(cmd);
-    }
-
-    free(cmd);
-
-    return 1;
 }
 
 //// FOR DEBUG PURPOSES

@@ -91,7 +91,7 @@ static int  attestation_server_ext_parse_cb(SSL *s, unsigned int ext_type,
 static bool get_attestation(const unsigned char **out, size_t *outlen);
 static bool verify_attestation(const unsigned char *in, size_t inlen);
 
-int add_attestation_extension(SSL_CTX* ctx, bool is_server, const char* snpguest);
+int add_attestation_extension(SSL_CTX* ctx, bool is_server);
 
 static int get_attestation_report(attestation_report* ar);
 

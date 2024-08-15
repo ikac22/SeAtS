@@ -34,10 +34,10 @@ static volatile bool    server_running = true;
 
 static void usage(void)
 {
-    printf("Usage: sslecho s port snpguest_path\n");
+    printf("Usage: sslecho s port\n");
     printf("       --or--\n");
     printf("       sslecho c ip port\n");
-    printf("       c=client, s=server, ip=dotted ip of server, port=port of the server, snpguest_path=absolute path to snpguest tool\n");
+    printf("       c=client, s=server, ip=dotted ip of server, port=port of the server\n");
     exit(EXIT_FAILURE);
 }
 
@@ -47,7 +47,6 @@ int main(int argc, char **argv)
     bool isServer;
     int result;
 
-    const char *snpguest_path = NULL;
     SSL_CTX *ssl_ctx = NULL;
     SSL *ssl = NULL;
 
@@ -92,9 +91,8 @@ int main(int argc, char **argv)
         target_port = atoi(argv[3]);
     }
     else{
-        if (argc != 4){ usage(); }
+        if (argc != 3){ usage(); }
         target_port = atoi(argv[2]);
-        snpguest_path = argv[3];
     }
 
     /* Create context used by both client and server */
@@ -106,7 +104,7 @@ int main(int argc, char **argv)
         printf("We are the server on port: %d\n\n", target_port);
 
         /* Configure server context with appropriate key files */
-        configure_server_context(ssl_ctx, snpguest_path);
+        configure_server_context(ssl_ctx);
 
         /* Create server socket; will bind with server port and listen */
         server_skt = create_socket(true, target_port);
