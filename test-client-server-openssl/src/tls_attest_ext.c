@@ -28,21 +28,31 @@
 // COMMANDS TO RUN ON SERVER
 static const char *snpguest_report_cmd = SNPGUEST_REPORT_CMD " " SR_ATTESTATION_FILE_PATH " " SR_REPORT_DATA_FILE_PATH " --random";
 static const char *snphost_import_cmd = SNPHOST_IMPORT_CERTS_CMD " " SR_CERT_BLOB_FILE_PATH;
-static const char *snpguest_certificates_cmd = SNPGUEST_CERTIFICATES_CMD " " SR_CERTS_PATH;
+static const char *snpguest_certificates_cmd = SNPGUEST_CERTIFICATES_CMD " pem " SR_CERTS_PATH;
 static bool CERTS_LOADED = false;
 
 // COMMANDS TO RUN ON CLIENT
 static const char *snpmeasure_cmd = CL_CALCULATE_MEASUREMENT_SCRIPT_PATH " > " CL_CALCULATED_ATTESTATION_FILE_PATH;
 static const char *snpguest_certs_cmd = SNPGUEST_VERIFY_CERTS_CMD " " CL_CERTS_PATH;
 static const char *snpguest_attestation_cmd = SNPGUEST_VERIFY_ATTESTATION_CMD " " CL_CERTS_PATH " " CL_ATTESTATION_FILE_PATH; 
-static const char *snphost_export_cmd = SNPHOST_EXPORT_CERTS_CMD " " CL_CERT_BLOB_FILE_PATH " " CL_CERTS_PATH; 
+static const char *snphost_export_cmd = SNPHOST_EXPORT_CERTS_CMD " pem " CL_CERT_BLOB_FILE_PATH " " CL_CERTS_PATH; 
 
 static bool DEBUG = 0;
 
 bool attestation_extension_present = false;
 
+void sprint_string_hex(char* dst, const unsigned char* s, int len){ 
+    for(int i = 0; i < len; i++){
+        sprintf(dst, "%02x", (unsigned int) *s++);
+        dst+=2;
+    }
+}
+
 static int verify_measurement(char* measurement){
-    char calc_measurement[48];
+    char calc_measurement[96];
+    char got_measurement[96];
+
+    sprint_string_hex(got_measurement, measurement, 48);
 
     system(snpmeasure_cmd);
  
@@ -50,9 +60,13 @@ static int verify_measurement(char* measurement){
 
     measurement_file = fopen(CL_CALCULATED_ATTESTATION_FILE_PATH, "rb");
 
-    fread((char*)calc_measurement, 48, 1, measurement_file);
+    fread((char*)calc_measurement, 96, 1, measurement_file);
 
-    if (memcmp(calc_measurement, measurement, 48)){
+    if (memcmp(calc_measurement, got_measurement, 96)){
+        printf("\nCALCULATED: ");
+        fwrite(calc_measurement, 96, 1, stdout);
+        fflush(stdout);
+        printf("\n");
         return false;
     }
 
@@ -90,10 +104,17 @@ static bool verify_attestation(const unsigned char* in, size_t inlen){
 
     const unsigned char* cb = in + sizeof(attestation_report);
     size_t cb_size = inlen - sizeof(attestation_report);
+    
+    if(DEBUG){
+        fwrite(in, inlen, 1, stdout);
+        fflush(stdout);
+    }
 
     save_attestation(ar);
 
     save_cert_blob(cb, cb_size);     
+
+    system(snphost_export_cmd);
 
     if (!verify_sev_snp_certs()){
         printf("PROVIDED CERTIFICATES INVALID!\n");
@@ -106,7 +127,9 @@ static bool verify_attestation(const unsigned char* in, size_t inlen){
     } 
 
     if (!verify_measurement(ar->measurement)){
-        printf("MEASUREMENT INVALID!\n");
+        printf("MEASUREMENT INVALID!\nGOT: ");
+        fwrite(ar->measurement, 48, 1, stdout);
+        fflush(stdout);
         return false;
     }
     return true;
@@ -174,6 +197,13 @@ static int get_attestation_report(attestation_report* ar){
 static bool get_attestation(const unsigned char **out, size_t *outlen){
     char *cert_blob_buff = NULL;
     size_t cert_blob_buff_len = 0;
+
+    if (!CERTS_LOADED){
+        system(snpguest_certificates_cmd);
+        CERTS_LOADED=true;
+    }
+    
+    system(snphost_import_cmd);
     
     load_cert_blob(&cert_blob_buff, &cert_blob_buff_len);
 
