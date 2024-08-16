@@ -1,3 +1,7 @@
+
+git submodule init
+git submodule update
+
 SNP_MEASURE=packages/sev-snp-measure
 SNPGUEST=packages/snpguest
 SNPHOST=packages/snphost
@@ -15,3 +19,5 @@ cargo build -r
 cd -
 
 cp $SNPHOST/target/release/snphost bin/
+
+chmod +x bin/*
