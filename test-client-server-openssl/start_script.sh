@@ -8,8 +8,8 @@ if [ $# -ne 1 ]; then
 	exit
 fi
 
-PATH=$PATH:$(pwd)/bin/
-PYTHONPATH=$PYTHONPATH:$(pwd)/packages/sev-snp-measure
+export PATH=$PATH:$(pwd)/bin/
+export PYTHONPATH=$PYTHONPATH:$(pwd)/packages/sev-snp-measure
 
 if [ "$1" == 's' ]; then
 	./ssl_echo s 7002 
