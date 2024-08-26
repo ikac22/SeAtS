@@ -225,17 +225,18 @@ static int attestation_client_ext_add_cb(SSL *s, unsigned int ext_type,
                                         void *add_arg)
 {
     unsigned char* client_random_buffer = malloc(CLIENT_RANDOM_SIZE);
-    unsigned char* client_random_print_buffer = malloc(CLIENT_RANDOM_SIZE * 2);
+    unsigned char* client_random_print_buffer = malloc(CLIENT_RANDOM_SIZE * 2 + 1); 
 
     SSL_get_client_random(s, client_random_buffer, CLIENT_RANDOM_SIZE);
     
     switch (ext_type) {
         case 65280:
             sprint_string_hex((char*)client_random_print_buffer, (const unsigned char*)out, CLIENT_RANDOM_SIZE);
-            printf("ADDING NONCE TO THE ATTESTATION EXTENSION: %s \n", client_random_print_buffer);
+            printf("ADDING NONCE TO THE ATTESTATION EXTENSION: %s\n", client_random_print_buffer);
             SSL_get_client_random(s, client_random_buffer, CLIENT_RANDOM_SIZE); 
             free(client_random_print_buffer);
             *out = client_random_buffer;
+            *outlen = CLIENT_RANDOM_SIZE;
             break;
         default:
             break;
