@@ -249,12 +249,7 @@ int main(int argc, char **argv)
                     printf("Server closed connection\n");
                     ERR_print_errors_fp(stderr);
                     break;
-                } else {
-                    /* Show it */
-                    rxbuf[rxlen] = 0;
-                    printf("Received: %s", rxbuf);
-                }
-            }
+                }             }
             printf("Client exiting...\n");
         } else {
 

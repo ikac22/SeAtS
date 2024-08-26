@@ -1,4 +1,5 @@
 #include "tls_attest_ext.h"
+#include <openssl/ssl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,20 +23,25 @@
 #define SNPHOST_EXPORT_CERTS_CMD "snphost export"
 #define SNPHOST_IMPORT_CERTS_CMD "snphost import"
 
+#define SNPGUEST_LOG_PIPE ">> snpguest.log 2>&1"
+#define SNPHOST_LOG_PIPE ">> snphost.log 2>&1"
 
 #define CMD_STRING_ADDITIONAL_LENGTH 13
 
+#define CLIENT_RANDOM_SIZE 32
+
 // COMMANDS TO RUN ON SERVER
-static const char *snpguest_report_cmd = SNPGUEST_REPORT_CMD " " SR_ATTESTATION_FILE_PATH " " SR_REPORT_DATA_FILE_PATH " --random";
-static const char *snphost_import_cmd = SNPHOST_IMPORT_CERTS_CMD " " SR_CERTS_PATH " " SR_CERT_BLOB_FILE_PATH;
-static const char *snpguest_certificates_cmd = SNPGUEST_CERTIFICATES_CMD " pem " SR_CERTS_PATH;
+static const char *snpguest_report_cmd = SNPGUEST_REPORT_CMD " " SR_ATTESTATION_FILE_PATH " " SR_REPORT_DATA_FILE_PATH " " SNPGUEST_LOG_PIPE;
+static const char *snphost_import_cmd = SNPHOST_IMPORT_CERTS_CMD " " SR_CERTS_PATH " " SR_CERT_BLOB_FILE_PATH " " SNPHOST_LOG_PIPE;
+static const char *snpguest_certificates_cmd = SNPGUEST_CERTIFICATES_CMD " pem " SR_CERTS_PATH " " SNPGUEST_LOG_PIPE;
 static bool CERTS_LOADED = false;
 
 // COMMANDS TO RUN ON CLIENT
 static const char *snpmeasure_cmd = CL_CALCULATE_MEASUREMENT_SCRIPT_PATH " > " CL_CALCULATED_ATTESTATION_FILE_PATH;
-static const char *snpguest_certs_cmd = SNPGUEST_VERIFY_CERTS_CMD " " CL_CERTS_PATH;
-static const char *snpguest_attestation_cmd = SNPGUEST_VERIFY_ATTESTATION_CMD " " CL_CERTS_PATH " " CL_ATTESTATION_FILE_PATH; 
-static const char *snphost_export_cmd = SNPHOST_EXPORT_CERTS_CMD " pem " CL_CERT_BLOB_FILE_PATH " " CL_CERTS_PATH; 
+static const char *snpguest_certs_cmd = SNPGUEST_VERIFY_CERTS_CMD " " CL_CERTS_PATH " " SNPGUEST_LOG_PIPE;
+static const char *snpguest_attestation_cmd = SNPGUEST_VERIFY_ATTESTATION_CMD " " CL_CERTS_PATH " " CL_ATTESTATION_FILE_PATH " " SNPGUEST_LOG_PIPE; 
+static const char *snphost_export_cmd = SNPHOST_EXPORT_CERTS_CMD " pem " CL_CERT_BLOB_FILE_PATH " " CL_CERTS_PATH " " SNPHOST_LOG_PIPE; 
+static const char *print_attestation_cmd = "xxd " CL_ATTESTATION_FILE_PATH;
 
 static bool DEBUG = 0;
 
@@ -183,14 +189,6 @@ static int get_attestation_report(attestation_report* ar){
 
     fclose(att_file);
 
-    // if(DEBUG){
-    //     printf("----------------------- ATTESTATION FILE -----------------------");
-    //     sprintf(cmd, "xxd %s", SR_ATTESTATION_FILE_PATH);
-    //     system(cmd);
-    // }
-
-    // free(cmd);
-
     return 1;
 }
 
@@ -209,7 +207,7 @@ static bool get_attestation(const unsigned char **out, size_t *outlen){
 
     *out = malloc(sizeof(attestation_report) + cert_blob_buff_len);
 
-    get_attestation_report((attestation_report*)*out); 
+    get_attestation_report((attestation_report*) *out); 
 
     memcpy((void*)(*out + sizeof(attestation_report)), cert_blob_buff, cert_blob_buff_len);
     
@@ -226,13 +224,23 @@ static int attestation_client_ext_add_cb(SSL *s, unsigned int ext_type,
                                         size_t chainidx, int *al,
                                         void *add_arg)
 {
+    unsigned char* client_random_buffer = malloc(CLIENT_RANDOM_SIZE);
+    unsigned char* client_random_print_buffer = malloc(CLIENT_RANDOM_SIZE * 2);
+
+    SSL_get_client_random(s, client_random_buffer, CLIENT_RANDOM_SIZE);
+    
     switch (ext_type) {
         case 65280:
-            printf(" - attestation_client_ext_add_cb from client called!\n");
+            sprint_string_hex((char*)client_random_print_buffer, (const unsigned char*)out, CLIENT_RANDOM_SIZE);
+            printf("ADDING NONCE TO THE ATTESTATION EXTENSION: %s \n", client_random_print_buffer);
+            SSL_get_client_random(s, client_random_buffer, CLIENT_RANDOM_SIZE); 
+            free(client_random_print_buffer);
+            *out = client_random_buffer;
             break;
         default:
             break;
     }
+
     return 1;
 }
 
@@ -241,6 +249,7 @@ static void  attestation_client_ext_free_cb(SSL *s, unsigned int ext_type,
                                           const unsigned char *out,
                                           void *add_arg)
 {
+    free(out);
     printf(" - attestation_client_ext_free_cb from client called!\n");
 }
 
@@ -254,7 +263,8 @@ static int  attestation_client_ext_parse_cb(SSL *s, unsigned int ext_type,
     attestation_extension_present=true;
     printf(" - attestation_client_ext_parse_cb from client called!\n");
     verify_attestation(in,inlen);
-    printf("=== ATTESTATION EXTENXION (%lu): Message from server: %s ===\n", sizeof(attestation_report), in);
+    printf("=== ATTESTATION EXTENXION (%lu): Message from server ===\n", sizeof(attestation_report));
+    print_attestation_report_hex((attestation_report*)in);
     return 1;
 }
 
@@ -272,7 +282,8 @@ static int attestation_server_ext_add_cb(SSL *s, unsigned int ext_type,
         case 65280:
             printf(" - attestation_server_ext_add_cb from server called!\n");
             get_attestation(out, outlen);
-            printf("=== ATTESTATION EXTENXION: Sending message: %s ===\n", *out);
+            printf("=== ATTESTATION EXTENXION: Sending message ===\n");
+            print_attestation_report_hex((attestation_report*) *out);
             break;
         default:
             break;
@@ -295,7 +306,12 @@ static int  attestation_server_ext_parse_cb(SSL *s, unsigned int ext_type,
                                           size_t chainidx, int *al,
                                           void *parse_arg)
 {
-    printf(" - attestation_server_ext_parse_cb from server called!\n");
+    char* hex_buffer = malloc(inlen*2); 
+    sprint_string_hex(hex_buffer, in, inlen);
+    printf("RECEIVING NONCE FROM CLIENT: %s\n", hex_buffer);
+    FILE* nonce_file = fopen(SR_REPORT_DATA_FILE_PATH, "wb");
+    fwrite(hex_buffer, 1, inlen * 2, nonce_file);
+    free(hex_buffer);
     return 1;
 }
 
