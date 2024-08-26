@@ -27,7 +27,7 @@
 
 // COMMANDS TO RUN ON SERVER
 static const char *snpguest_report_cmd = SNPGUEST_REPORT_CMD " " SR_ATTESTATION_FILE_PATH " " SR_REPORT_DATA_FILE_PATH " --random";
-static const char *snphost_import_cmd = SNPHOST_IMPORT_CERTS_CMD " " SR_CERT_BLOB_FILE_PATH;
+static const char *snphost_import_cmd = SNPHOST_IMPORT_CERTS_CMD " " SR_CERTS_PATH " " SR_CERT_BLOB_FILE_PATH;
 static const char *snpguest_certificates_cmd = SNPGUEST_CERTIFICATES_CMD " pem " SR_CERTS_PATH;
 static bool CERTS_LOADED = false;
 
