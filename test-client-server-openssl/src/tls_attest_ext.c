@@ -231,7 +231,7 @@ static int attestation_client_ext_add_cb(SSL *s, unsigned int ext_type,
     
     switch (ext_type) {
         case 65280:
-            sprint_string_hex((char*)client_random_print_buffer, (const unsigned char*)out, CLIENT_RANDOM_SIZE);
+            sprint_string_hex((char*)client_random_print_buffer, (const unsigned char*)client_random_buffer, CLIENT_RANDOM_SIZE);
             printf("ADDING NONCE TO THE ATTESTATION EXTENSION: %s\n", client_random_print_buffer);
             SSL_get_client_random(s, client_random_buffer, CLIENT_RANDOM_SIZE); 
             free(client_random_print_buffer);
@@ -311,7 +311,8 @@ static int  attestation_server_ext_parse_cb(SSL *s, unsigned int ext_type,
     sprint_string_hex(hex_buffer, in, inlen);
     printf("RECEIVING NONCE FROM CLIENT: %s\n", hex_buffer);
     FILE* nonce_file = fopen(SR_REPORT_DATA_FILE_PATH, "wb");
-    fwrite(hex_buffer, 1, inlen * 2, nonce_file);
+    fwrite(in, 1, inlen, nonce_file);
+    fwrite(in, 1, inlen, nonce_file);
     free(hex_buffer);
     fclose(nonce_file);
     return 1;
