@@ -306,12 +306,13 @@ static int  attestation_server_ext_parse_cb(SSL *s, unsigned int ext_type,
                                           size_t chainidx, int *al,
                                           void *parse_arg)
 {
-    char* hex_buffer = malloc(inlen*2); 
+    char* hex_buffer = malloc(inlen*2 + 1); 
     sprint_string_hex(hex_buffer, in, inlen);
     printf("RECEIVING NONCE FROM CLIENT: %s\n", hex_buffer);
     FILE* nonce_file = fopen(SR_REPORT_DATA_FILE_PATH, "wb");
     fwrite(hex_buffer, 1, inlen * 2, nonce_file);
     free(hex_buffer);
+    fclose(nonce_file);
     return 1;
 }
 
@@ -356,7 +357,7 @@ void print_string_hex(const unsigned char* s, int len){
 
 // For the purpose of checking the reading
 static void print_attestation_report_hex(attestation_report* ar){
-    printf("----------------------- READ DATA USING STRUCT -----------------------");
+    printf("----------------------- READ DATA USING STRUCT -----------------------\n");
     print_int_member(ar, version);
     print_int_member(ar, guest_svn);
     print_long_member(ar, policy);
