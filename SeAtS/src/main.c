@@ -1,12 +1,3 @@
-/*
- *  Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
- *
- *  Licensed under the Apache License 2.0 (the "License").  You may not use
- *  this file except in compliance with the License.  You can obtain a copy
- *  in the file LICENSE in the source distribution or at
- *  https://www.openssl.org/source/license.html
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +13,7 @@
 #include "common.h"
 #include "ssl_config.h"
 #include "socket_config.h"
+#include "tls_attest_ext.h"
 
 
 /*
@@ -71,6 +63,8 @@ int main(int argc, char **argv)
     /* ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
     signal(SIGPIPE, SIG_IGN);
 
+    setbuf(stdout, NULL);
+
     /* Splash */
     printf("\nsslecho : Simple Echo Client/Server : %s : %s\n\n", __DATE__,
     __TIME__);
@@ -83,14 +77,12 @@ int main(int argc, char **argv)
     isServer = (argv[1][0] == 's') ? true : false;
     /* If client get remote server address (could be 127.0.0.1) */
     if (!isServer) {
-        if (argc != 4) {
-            usage();
-            /* NOTREACHED */
-        }
+        if (argc != 4) { usage(); }
         rem_server_ip = argv[2];
         target_port = atoi(argv[3]);
     }
     else{
+        if (argc != 3){ usage(); }
         target_port = atoi(argv[2]);
     }
 
@@ -215,7 +207,10 @@ int main(int argc, char **argv)
 
         /* Now do SSL connect with server */
         if (SSL_connect(ssl) == 1) {
-
+            if(!attestation_extension_present){
+                printf("------ ATTESTATION EXTENSION NOT PRESENT ------\n");
+                goto exit;
+            }
             printf("SSL connection to server successful\n\n");
 
             /* Loop to send input from keyboard */
@@ -245,12 +240,7 @@ int main(int argc, char **argv)
                     printf("Server closed connection\n");
                     ERR_print_errors_fp(stderr);
                     break;
-                } else {
-                    /* Show it */
-                    rxbuf[rxlen] = 0;
-                    printf("Received: %s", rxbuf);
-                }
-            }
+                }             }
             printf("Client exiting...\n");
         } else {
 
