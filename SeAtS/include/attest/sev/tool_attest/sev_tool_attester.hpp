@@ -13,7 +13,6 @@ public:
 	~sev_tool_attester() = default;
 	// virtual void set_data(uint8_t* data) override;
 	virtual int attest() override;
-	const EvidencePayload* getResult();
 };
 
 }

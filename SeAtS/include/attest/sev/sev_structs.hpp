@@ -3,6 +3,8 @@
 
 #include "attest/sev/tool_attest/sev_tool_attest_utils.hpp"
 #include "ssl_ext/attestation_ext_structs.hpp"
+#include "ssl_ext/evidence_ext_structs.hpp"
+
 #include <cstdint>
 #include <openssl/crypto.h>
 
@@ -21,5 +23,7 @@ struct SevEvidencePayload: EvidencePayload{
     char* sig;
     EVP_PKEY* pkey;
 };
+
+bool verify_kat(EVP_PKEY* pkey, SevEvidencePayload* sep, EvidenceRequestClient* erq);
 
 #endif

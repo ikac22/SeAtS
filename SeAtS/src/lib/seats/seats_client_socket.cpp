@@ -17,9 +17,9 @@ seats_client_socket::seats_client_socket(){
     this->erq = new EvidenceRequestClient();
     // ADD FUNCTION FOR CHOOSING SUPPORTED EVIDENCE TYPES 
     // For now only one
-    EvidenceType* et = new EvidenceType();
-    et->type_encoding = TypeEncoding::CONTENT_FORMAT;
-    et->supported_content.content_format = ContentFormat::BINARY_FORMAT;
+    EvidenceType et;
+    et.type_encoding = TypeEncoding::CONTENT_FORMAT;
+    et.supported_content.content_format = ContentFormat::BINARY_FORMAT;
     
     erq->supported_evidence_types.push_back(et);
 

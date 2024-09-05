@@ -126,6 +126,47 @@ int verify_signature(EVP_PKEY* pkey, char* sig, size_t siglen, char* orig, size_
     return 0;
 }
 
+bool verify_kat(EVP_PKEY* pkey, SevEvidencePayload* sep, EvidenceRequestClient* erq){
+    const unsigned char* m;
+    size_t mlen = erq->serialize(&m);
+
+    char* dig;
+    unsigned int diglen;
+
+    
+    if(get_sha256_digest((char*)m, mlen, &dig, &diglen)){
+        perror("Failed to generate digest of the client hello extension message");
+        delete []m;
+        return false;
+    }
+    delete []m;
+
+    if(verify_signature(pkey, sep->sig, sep->siglen, dig, diglen)){
+        perror("Failed to verify signature of the given TIK!");
+        delete []dig;
+        return false;
+    }
+    delete []dig;
+
+    m = (const unsigned char*)new char[32];
+    memcpy((void*)m, sep->attestation_report.report_data, 32);
+    if(get_sha256_digest(sep->sig, sep->siglen, &dig, &diglen)){
+        perror("Unable to generate hash from signature!");
+        delete []m;
+        return false;
+    }
+
+    if(memcmp(m, dig, diglen)){
+        perror("Hash from attestation report dont match calculated hash of signature!");
+        delete []m;
+        delete []dig;
+        return false; 
+    }
+    delete []m;
+    delete []dig;
+
+    return true;
+}
 
 int SevEvidencePayload::serialize(const unsigned char** buff){
     int len = sizeof(attestation_report_t) 
