@@ -129,5 +129,5 @@ int EvidenceRequestClient::deserialize(const unsigned char* buff){
         supported_evidence_types.push_back(tmp_et);
     }
     
-    return 0;
+    return tmp-buff;
 }

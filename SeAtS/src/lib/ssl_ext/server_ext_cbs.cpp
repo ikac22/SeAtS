@@ -17,19 +17,17 @@ int seats::server_certificate_ext_add_cb(SSL *, unsigned int,
                                         size_t chainidx, int *,
                                         void *add_arg)
 {
-    *out = (const unsigned char*)"mica";
-    *outlen = 4;
-
     UNUSED(add_arg);
     UNUSED(chainidx);
 
-    // if(chainidx == 0){
-    printf("server_certificate_ext_add_cb\n");
-        // seats::seats_stc_socket* ss = (seats::seats_stc_socket*)add_arg;
-        // AttestationExtension* ae = ss->attest();
-        // *outlen = ae->serialize(out);
-        // return true;
-    // }
+    if(chainidx == 0){
+        seats::seats_stc_socket* ss = (seats::seats_stc_socket*)add_arg;
+        printf("Generating attestation extension struct");
+        AttestationExtension* ax = ss->attest();
+        printf("Serializing attestation extension!\n");
+        *outlen = ax->serialize(out);
+        delete ax;
+    }
     return 1;
 }
 

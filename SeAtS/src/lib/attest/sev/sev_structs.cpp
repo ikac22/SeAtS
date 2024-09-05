@@ -1,4 +1,5 @@
 #include"attest/sev/sev_structs.hpp"
+#include "ssl_ext/evidence_ext_structs.hpp"
 #include <cstring>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -42,6 +43,8 @@ int digest_and_sign(EVP_PKEY* pkey, char* m, size_t mlen, char** sig, size_t* si
         perror("Failed to get digest of the message!");
         return 6;
     } 
+    printf("DIGEST SERVER:\n"); 
+    print_string_hex((const unsigned char*)md, mdlen);
 
     EVP_PKEY_CTX *ctx;
 
@@ -94,6 +97,9 @@ int digest_and_sign(EVP_PKEY* pkey, char* m, size_t mlen, char** sig, size_t* si
 int verify_signature(EVP_PKEY* pkey, char* sig, size_t siglen, char* orig, size_t origlen){
     EVP_PKEY_CTX *ctx;
 
+    printf("SIGNATURE CLIENT:\n");
+    print_string_hex((const unsigned char*)sig, (int)siglen);
+    
     ctx = EVP_PKEY_CTX_new(pkey, NULL /* no engine */);
     if (ctx == NULL){
         perror("FAILED while creating PKEY CTX!");
@@ -133,6 +139,11 @@ bool verify_kat(EVP_PKEY* pkey, SevEvidencePayload* sep, EvidenceRequestClient* 
     char* dig;
     unsigned int diglen;
 
+
+    printf("PKEY CLIENT:\n");
+    EVP_PKEY_print_public_fp(stdout, pkey, 3, NULL);
+    // print_string_hex((const unsigned char*)kat, (int)katlen);
+
     
     if(get_sha256_digest((char*)m, mlen, &dig, &diglen)){
         perror("Failed to generate digest of the client hello extension message");
@@ -140,6 +151,9 @@ bool verify_kat(EVP_PKEY* pkey, SevEvidencePayload* sep, EvidenceRequestClient* 
         return false;
     }
     delete []m;
+    
+    printf("DIGEST CLIENT:\n"); 
+    print_string_hex((const unsigned char*)dig, diglen);
 
     if(verify_signature(pkey, sep->sig, sep->siglen, dig, diglen)){
         perror("Failed to verify signature of the given TIK!");
@@ -179,24 +193,41 @@ int SevEvidencePayload::serialize(const unsigned char** buff){
 
     char* tmp = (char*)*buff;
 
-    memcpy(tmp, (const void*)&attestation_report, sizeof(attestation_report_t));
+    *(attestation_report_t*)tmp = attestation_report;
     tmp += sizeof(attestation_report_t);
     
-    memcpy(tmp, (const void*)&amd_cert_data_len, sizeof(amd_cert_data_len));
+    *(uint64_t*)tmp = amd_cert_data_len;
     tmp += sizeof(amd_cert_data_len);
 
-    memcpy(tmp, (const void*)&amd_cert_data, amd_cert_data_len);
+    memcpy(tmp, (const void*)amd_cert_data, amd_cert_data_len);
     tmp += amd_cert_data_len;
  
-    memcpy(tmp, (const void*)&siglen, sizeof(siglen));
+    *(size_t*)tmp = siglen;
     tmp += sizeof(siglen);
 
-    memcpy(tmp, (const void*)&sig, siglen);
+    memcpy(tmp, (const void*)sig, siglen);
     tmp += siglen;
 
     return len; 
 }
 
-int SevEvidencePayload::deserialize(const unsigned char*){
-    return 0;
+int SevEvidencePayload::deserialize(const unsigned char* buff){
+    const unsigned char* tmp = buff;
+    attestation_report = *(attestation_report_t*)tmp;
+    tmp += sizeof(attestation_report_t);
+    
+    amd_cert_data_len = *(uint64_t*)tmp;
+    tmp += sizeof(amd_cert_data_len);
+
+    amd_cert_data = new char[amd_cert_data_len];
+    memcpy((void*)amd_cert_data, tmp, amd_cert_data_len);
+    tmp += amd_cert_data_len;
+ 
+    siglen = *(size_t*)tmp;
+    tmp += sizeof(siglen);
+
+    sig = new char[siglen];
+    memcpy((void*)sig, tmp, siglen);
+    tmp += siglen;
+    return tmp - buff;
 }

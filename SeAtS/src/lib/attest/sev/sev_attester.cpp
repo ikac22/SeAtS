@@ -42,10 +42,15 @@ void seats::sev_attester::set_data(uint8_t* data){
         return;
     }
 
-    if(get_sha256_digest(sig, siglen, &kat, &katlen)){ 
+    if(get_sha256_digest(sep->sig, sep->siglen, &kat, &katlen)){ 
         perror("Failed to generate digest of the signature");
         return;
     } 
+    printf("SIGNATURE SERVER:\n");
+    print_string_hex((const unsigned char*)sep->sig, (int)sep->siglen);
+
+    printf("KAT SERVER:\n");
+    print_string_hex((const unsigned char*)kat, (int)katlen);
 }
 
 void sev_attester::generate_and_save_cert(){ 
@@ -156,6 +161,8 @@ void sev_attester::generate_and_save_cert(){
         goto end_generate_and_save_certificate;
     }
     fclose(f);
+    printf("PKEY SERVER:\n");
+    EVP_PKEY_print_public_fp(stdout, pkey, 3, NULL);
 
     // TODO: Add possibility to chose cert file path or to generate unique filepath
     f = fopen(SEATS_CERT_FILE_PATH, "wb");
