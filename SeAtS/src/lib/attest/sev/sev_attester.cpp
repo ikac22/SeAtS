@@ -34,9 +34,7 @@ void seats::sev_attester::set_data(uint8_t* data){
     if(sep->sig) delete [](sep->sig); 
 
     erq = new EvidenceRequestClient();
-    printf("Deserializing ERQ\n");
     size_t len = erq->deserialize((const unsigned char*) data);
-    printf("Calculating digest\n");
     if(digest_and_sign(pkey, (char*)data, len, &(sep->sig), &(sep->siglen))){
         perror("Failed to generate signature of sentdata");
         return;
@@ -46,11 +44,6 @@ void seats::sev_attester::set_data(uint8_t* data){
         perror("Failed to generate digest of the signature");
         return;
     } 
-    printf("SIGNATURE SERVER:\n");
-    print_string_hex((const unsigned char*)sep->sig, (int)sep->siglen);
-
-    printf("KAT SERVER:\n");
-    print_string_hex((const unsigned char*)kat, (int)katlen);
 }
 
 void sev_attester::generate_and_save_cert(){ 
@@ -161,8 +154,6 @@ void sev_attester::generate_and_save_cert(){
         goto end_generate_and_save_certificate;
     }
     fclose(f);
-    printf("PKEY SERVER:\n");
-    EVP_PKEY_print_public_fp(stdout, pkey, 3, NULL);
 
     // TODO: Add possibility to chose cert file path or to generate unique filepath
     f = fopen(SEATS_CERT_FILE_PATH, "wb");
@@ -187,5 +178,4 @@ end_generate_and_save_certificate:
         pkey = NULL; 
     }
     if(x509) X509_free(x509);
-    printf("CERTIFICATE SUCCESSFULLY CREATED!");
 }

@@ -17,14 +17,10 @@ int seats::server_certificate_ext_add_cb(SSL *, unsigned int,
                                         size_t chainidx, int *,
                                         void *add_arg)
 {
-    UNUSED(add_arg);
-    UNUSED(chainidx);
 
     if(chainidx == 0){
         seats::seats_stc_socket* ss = (seats::seats_stc_socket*)add_arg;
-        printf("Generating attestation extension struct");
         AttestationExtension* ax = ss->attest();
-        printf("Serializing attestation extension!\n");
         *outlen = ax->serialize(out);
         delete ax;
     }
@@ -34,13 +30,9 @@ int seats::server_certificate_ext_add_cb(SSL *, unsigned int,
 void seats::server_certificate_ext_free_cb(SSL *, unsigned int,
                                           unsigned int,
                                           const unsigned char *out,
-                                          void *add_arg)
+                                          void *)
 {
-    UNUSED(out);
-    UNUSED(add_arg);
-
-    printf("server_certificate_ext_free_cb\n");
-    // free((void*)out);
+    delete []out;
 }
 
 
@@ -54,11 +46,7 @@ int seats::client_hello_ext_parse_cb(SSL *, unsigned int,
 
 {
     UNUSED(inlen);
-    printf("Getting argument for Client Hello parse\n");
     seats::seats_stc_socket* ss = (seats::seats_stc_socket*)parse_arg;
-    printf("Setting attester data(deserializing EvidenceRequest)\n");
-    printf("Recieved buffer with serialized Evidence Request!\n");
-    print_string_hex(in, inlen);
     ss->m_attester->set_data((uint8_t*)in); 
     // TODO: Add evidence output
     return 1;

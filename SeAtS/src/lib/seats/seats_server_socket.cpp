@@ -44,7 +44,6 @@ seats_status seats_server_socket::get_status(){ return status; }
 seats_status seats_server_socket::create_socket(uint port){
     int optval = 1;
 
-    printf("Creating socket\n");
     socket_handle = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_handle < 0) {
         perror("Unable to create socket");
@@ -55,7 +54,6 @@ seats_status seats_server_socket::create_socket(uint port){
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    printf("Setting sockopt\n");
     /* Reuse the address; good for quick restarts */
     if (setsockopt(socket_handle, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval))
             < 0) {
@@ -65,14 +63,12 @@ seats_status seats_server_socket::create_socket(uint port){
 
     }
 
-    printf("Binding socket\n");
     if (bind(socket_handle, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
         perror("Unable to bind");
         close(socket_handle);
         return seats_status::UNABLE_TO_BIND_SOCKET;
     }
 
-    printf("Listening\n");
     if (listen(socket_handle, 1) < 0) {
         perror("Unable to listen");
 

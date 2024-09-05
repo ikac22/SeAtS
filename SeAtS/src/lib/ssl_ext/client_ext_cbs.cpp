@@ -18,10 +18,8 @@ int seats::client_hello_ext_add_cb(SSL *, unsigned int,
                                         size_t, int *,
                                         void *add_arg)
 {
-    printf("Getting argument for client hello\n");
     seats::seats_client_socket* client_skt = (seats::seats_client_socket*)add_arg;
 
-    printf("Serializing Evidence Request\n");
     *outlen = client_skt->erq->serialize(out);
 
     return 1;
@@ -33,7 +31,6 @@ void seats::client_hello_ext_free_cb(SSL *, unsigned int,
                                           void *)
 {
     UNUSED(out);
-    printf("Freeing buffer det Client Hello created\n");
     delete []out;
 }
 
@@ -48,15 +45,14 @@ int  seats::server_certificate_ext_parse_cb(SSL *, unsigned int,
     UNUSED(inlen);
 
     if(chainidx == 0){
-        printf("Getting public key\n");
         EVP_PKEY* pkey = X509_get0_pubkey(x);
         AttestationExtension* aex = new AttestationExtension();       
         seats::seats_client_socket* cs = (seats::seats_client_socket*) parse_arg;
-        printf("Deserializing attestation extension\n");
         aex->deserialize(in);
-        printf("Trying to verify the attestation!\n");
-        if(cs->verify(aex, pkey))
+        if(cs->verify(aex, pkey)){
+            cs->close();
             return false;
+        }
     }
     return true;
 }

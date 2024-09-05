@@ -43,8 +43,6 @@ int digest_and_sign(EVP_PKEY* pkey, char* m, size_t mlen, char** sig, size_t* si
         perror("Failed to get digest of the message!");
         return 6;
     } 
-    printf("DIGEST SERVER:\n"); 
-    print_string_hex((const unsigned char*)md, mdlen);
 
     EVP_PKEY_CTX *ctx;
 
@@ -96,10 +94,7 @@ int digest_and_sign(EVP_PKEY* pkey, char* m, size_t mlen, char** sig, size_t* si
 
 int verify_signature(EVP_PKEY* pkey, char* sig, size_t siglen, char* orig, size_t origlen){
     EVP_PKEY_CTX *ctx;
-
-    printf("SIGNATURE CLIENT:\n");
-    print_string_hex((const unsigned char*)sig, (int)siglen);
-    
+ 
     ctx = EVP_PKEY_CTX_new(pkey, NULL /* no engine */);
     if (ctx == NULL){
         perror("FAILED while creating PKEY CTX!");
@@ -138,12 +133,6 @@ bool verify_kat(EVP_PKEY* pkey, SevEvidencePayload* sep, EvidenceRequestClient* 
 
     char* dig;
     unsigned int diglen;
-
-
-    printf("PKEY CLIENT:\n");
-    EVP_PKEY_print_public_fp(stdout, pkey, 3, NULL);
-    // print_string_hex((const unsigned char*)kat, (int)katlen);
-
     
     if(get_sha256_digest((char*)m, mlen, &dig, &diglen)){
         perror("Failed to generate digest of the client hello extension message");
@@ -152,9 +141,6 @@ bool verify_kat(EVP_PKEY* pkey, SevEvidencePayload* sep, EvidenceRequestClient* 
     }
     delete []m;
     
-    printf("DIGEST CLIENT:\n"); 
-    print_string_hex((const unsigned char*)dig, diglen);
-
     if(verify_signature(pkey, sep->sig, sep->siglen, dig, diglen)){
         perror("Failed to verify signature of the given TIK!");
         delete []dig;
