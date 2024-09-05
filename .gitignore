@@ -1,4 +1,5 @@
 test-client-server-openssl/app/sslecho
 test-client-server-openssl/app/*.o
 test-client-server-openssl/ssl_echo
+SeAtS/target/**/*
 
