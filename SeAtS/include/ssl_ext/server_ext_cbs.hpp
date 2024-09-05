@@ -3,6 +3,8 @@
 
 #include <openssl/ssl.h>
 
+namespace seats{
+
 // SERVER CERTIFICATE CALLBACKS
 int server_certificate_ext_add_cb(SSL *s, unsigned int ext_type,
                                         unsigned int context,
@@ -24,6 +26,7 @@ int  client_hello_ext_parse_cb(SSL *s, unsigned int ext_type,
                                           size_t inlen, X509 *x,
                                           size_t chainidx, int *al,
                                           void *parse_arg);
+}
 
 
 #endif // __SERVER_EXT__ 

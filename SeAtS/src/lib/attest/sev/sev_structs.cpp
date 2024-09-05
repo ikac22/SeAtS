@@ -28,7 +28,7 @@ int get_sha256_digest(char* m, size_t mlen, char** dig, unsigned int* diglen){
     }
 
     *dig = new char[*diglen];
-    memcpy(dig, md_value, *diglen);
+    memcpy(*dig, md_value, *diglen);
 
     EVP_MD_CTX_free(mdctx);
     return 0; 

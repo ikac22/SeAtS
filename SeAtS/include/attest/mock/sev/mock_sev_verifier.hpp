@@ -9,7 +9,6 @@ namespace seats{
 class mock_sev_verifier: public sev_verifier{
 public:
     mock_sev_verifier();
-	virtual ~mock_sev_verifier();
 	void set_data(uint8_t* data) override;
 	int verify(EVP_PKEY* pkey) override;
 protected:

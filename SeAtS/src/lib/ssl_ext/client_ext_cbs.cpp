@@ -3,44 +3,42 @@
 #include "ssl_ext/client_ext_cbs.hpp"
 #include "attest/verifier.hpp"
 #include "ssl_ext/attestation_ext_structs.hpp"
+#include "seats/seats_client_socket.hpp"
 #include "ssl_ext/evidence_ext_structs.hpp"
 #include <cstdlib>
 #include <openssl/ssl.h>
 
 
 #define UNUSED(x) (void)(x)
-int client_hello_ext_add_cb(SSL *, unsigned int,
+int seats::client_hello_ext_add_cb(SSL *, unsigned int,
                                         unsigned int,
                                         const unsigned char **out,
                                         size_t *outlen, X509 *,
                                         size_t, int *,
                                         void *add_arg)
 {
-    UNUSED(out);
-    UNUSED(outlen);
-    UNUSED(add_arg);
+    printf("Getting argument for client hello\n");
+    seats::seats_client_socket* client_skt = (seats::seats_client_socket*)add_arg;
 
-    printf("client_hello_ext_add_cb\n");
-    // EvidenceRequestClient* erq = (EvidenceRequestClient*)add_arg;
-    // *outlen = erq->serialize(out); 
-    // return true;
+    printf("Serializing Evidence Request\n");
+    *outlen = client_skt->erq->serialize(out);
+
     return 1;
 }
 
-void client_hello_ext_free_cb(SSL *, unsigned int,
+void seats::client_hello_ext_free_cb(SSL *, unsigned int,
                                           unsigned int,
                                           const unsigned char *out,
                                           void *add_arg)
 {
     UNUSED(out);
     UNUSED(add_arg);
-    printf("client_hello_ext_free_cb\n");
-    // free((void*)out); 
+    printf("Freeing buffer det Client Hello created\n");
+    delete []out;
 }
 
-
 // SERVER CERTIFICATE EXTENTSION 
-int  server_certificate_ext_parse_cb(SSL *ssl, unsigned int,
+int  seats::server_certificate_ext_parse_cb(SSL *ssl, unsigned int,
                                           unsigned int,
                                           const unsigned char *in,
                                           size_t inlen, X509 *x,

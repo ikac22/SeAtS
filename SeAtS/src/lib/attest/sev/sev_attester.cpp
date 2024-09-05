@@ -26,6 +26,7 @@ void seats::sev_attester::set_data(uint8_t* data){
     if(!evidence_payload){ 
         evidence_payload = new SevEvidencePayload();
         ((SevEvidencePayload*)evidence_payload)->pkey = pkey;
+        ((SevEvidencePayload*)evidence_payload)->sig = NULL;
     }
     SevEvidencePayload* sep = (SevEvidencePayload*)evidence_payload;
 
@@ -33,7 +34,9 @@ void seats::sev_attester::set_data(uint8_t* data){
     if(sep->sig) delete [](sep->sig); 
 
     erq = new EvidenceRequestClient();
+    printf("Deserializing ERQ\n");
     size_t len = erq->deserialize((const unsigned char*) data);
+    printf("Calculating digest\n");
     if(digest_and_sign(pkey, (char*)data, len, &(sep->sig), &(sep->siglen))){
         perror("Failed to generate signature of sentdata");
         return;

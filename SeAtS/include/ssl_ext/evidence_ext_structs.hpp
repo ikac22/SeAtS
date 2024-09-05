@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <vector>
 
+void print_string_hex(const unsigned char* s, int len);
+
 // EVIDENCE REQUEST/PROPOSE
 enum CredentialKind {
     ATTESTATION,

@@ -1,14 +1,16 @@
 
 
 // SERVER CERTIFICATE CALLBACKS
+#include "seats/seats_types.hpp"
 #include "ssl_ext/attestation_ext_structs.hpp"
 #include "ssl_ext/evidence_ext_structs.hpp"
 #include "ssl_ext/server_ext_cbs.hpp"
+#include "seats/seats_stc_socket.hpp"
 #include <cstdlib>
 
 #define UNUSED(x) (void)(x)
 
-int server_certificate_ext_add_cb(SSL *, unsigned int,
+int seats::server_certificate_ext_add_cb(SSL *, unsigned int,
                                         unsigned int,
                                         const unsigned char **out,
                                         size_t *outlen, X509 *,
@@ -31,7 +33,7 @@ int server_certificate_ext_add_cb(SSL *, unsigned int,
     return 1;
 }
 
-void  server_certificate_ext_free_cb(SSL *, unsigned int,
+void seats::server_certificate_ext_free_cb(SSL *, unsigned int,
                                           unsigned int,
                                           const unsigned char *out,
                                           void *add_arg)
@@ -45,7 +47,7 @@ void  server_certificate_ext_free_cb(SSL *, unsigned int,
 
 
 // CLIENT HELLO CALLBACKS
-int  client_hello_ext_parse_cb(SSL *, unsigned int,
+int seats::client_hello_ext_parse_cb(SSL *, unsigned int,
                                           unsigned int,
                                           const unsigned char *in,
                                           size_t inlen, X509 *,
@@ -53,16 +55,14 @@ int  client_hello_ext_parse_cb(SSL *, unsigned int,
                                           void *parse_arg)
 
 {
-    UNUSED(in);
     UNUSED(inlen);
-    UNUSED(parse_arg);
-
-    printf("client_hello_ext_parse_cb\n");
-    // EvidenceRequestClient* erq = new EvidenceRequestClient();
-    // seats::seats_stc_socket* ss = (seats::seats_stc_socket*)parse_arg;
-    // erq->deserialize(in);
-    // ss->m_attester->set_data()
-    // return true;
+    printf("Getting argument for Client Hello parse\n");
+    seats::seats_stc_socket* ss = (seats::seats_stc_socket*)parse_arg;
+    printf("Setting attester data(deserializing EvidenceRequest)\n");
+    printf("Recieved buffer with serialized Evidence Request!\n");
+    print_string_hex(in, inlen);
+    ss->m_attester->set_data((uint8_t*)in); 
+    // TODO: Add evidence output
     return 1;
 }
 

@@ -6,6 +6,7 @@
 #include <openssl/ssl.h>
 #include <sys/types.h>
 
+namespace seats{
 // CLIENT HELLO EXTENSION
 int client_hello_ext_add_cb(SSL *s, unsigned int ext_type,
                                         unsigned int context,
@@ -28,4 +29,5 @@ int  server_certificate_ext_parse_cb(SSL *s, unsigned int ext_type,
                                           size_t chainidx, int *al,
                                           void *parse_arg);
 
+}
 #endif // __CLIENT_EXT__

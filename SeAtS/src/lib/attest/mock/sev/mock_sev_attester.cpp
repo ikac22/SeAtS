@@ -16,8 +16,6 @@ int seats::mock_sev_attester::attest(){
         return 1;
     }
 
-    char* buff64 = new char[64];
-
     // Mock attestsation report
     memset(&(sep->attestation_report), 0, sizeof(attestation_report_t));
     set_mock_str(&(sep->attestation_report.signature));
@@ -29,5 +27,5 @@ int seats::mock_sev_attester::attest(){
     sep->amd_cert_data_len = 64;
     set_mock_str(sep->amd_cert_data);
    
-    return true; 
+    return 0; 
 }

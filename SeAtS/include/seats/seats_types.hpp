@@ -1,6 +1,7 @@
 #ifndef __SEATS_TYPES_HPP__
 #define __SEATS_TYPES_HPP__
 
+#include <stdio.h>
 #define leave_if_true(x) if((x)) return
 #define ATTESTATION_CLIENT_HELLO_EXTENSION_TYPE 65282
 #define ATTESTATION_CERTIFICATE_EXTENSION_TYPE 65280

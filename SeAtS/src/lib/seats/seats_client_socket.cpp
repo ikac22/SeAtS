@@ -79,7 +79,7 @@ seats_status seats_client_socket::create_context(){
                                 SSL_EXT_CLIENT_HELLO |  SSL_EXT_TLS1_3_CERTIFICATE,
                                 client_hello_ext_add_cb, 
                                 client_hello_ext_free_cb, 
-                                erq, 
+                                this, 
                                 server_certificate_ext_parse_cb, 
                                 this);
 

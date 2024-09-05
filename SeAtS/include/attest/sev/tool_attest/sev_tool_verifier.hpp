@@ -9,7 +9,6 @@ namespace seats{
 class sev_tool_verifier: sev_verifier{
 public:
     sev_tool_verifier();
-	virtual ~sev_tool_verifier();
 	void set_data(uint8_t* data) override;
 	int verify(EVP_PKEY* pkey) override;
     

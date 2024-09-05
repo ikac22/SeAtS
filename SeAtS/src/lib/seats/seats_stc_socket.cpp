@@ -30,8 +30,7 @@ seats_stc_socket::seats_stc_socket(int sock_fd, struct sockaddr_in addr, socklen
 
 seats_status seats_stc_socket::connect(const char*, int){ return seats_status::CONNECTION_ERROR; }
 
-AttestationExtension* seats_stc_socket::attest(EvidenceRequestClient* erq){
-    m_attester->set_data((uint8_t*)erq); 
+AttestationExtension* seats_stc_socket::attest(){
     if (m_attester->attest())
         return NULL;
     return m_attester->getResult();
