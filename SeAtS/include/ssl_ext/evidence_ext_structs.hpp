@@ -32,7 +32,7 @@ struct EvidenceType{
 };
 
 struct EvidenceRequestClient{
-    std::vector<EvidenceType> supported_evidence_types;
+    std::vector<EvidenceType*> supported_evidence_types;
     int64_t nonce;
 
     int serialize(const unsigned char**);

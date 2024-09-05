@@ -1,7 +1,14 @@
+#include "attest/sev/tool_attest/cmd/common.hpp"
 #include "attest/sev/tool_attest/cmd/sev_client.hpp"
 #include "attest/sev/tool_attest/sev_tool_attest_utils.hpp"
 #include <cstdio>
 #include <cstring>
+
+const char *snpmeasure_cmd = CL_CALCULATE_MEASUREMENT_SCRIPT_PATH " > " CL_CALCULATED_ATTESTATION_FILE_PATH;
+const char *snpguest_certs_cmd = SNPGUEST_VERIFY_CERTS_CMD " " CL_CERTS_PATH " " SNPGUEST_LOG_PIPE;
+const char *snpguest_attestation_cmd = SNPGUEST_VERIFY_ATTESTATION_CMD " " CL_CERTS_PATH " " CL_ATTESTATION_FILE_PATH " " SNPGUEST_LOG_PIPE; 
+const char *snphost_export_cmd = SNPHOST_EXPORT_CERTS_CMD " pem " CL_CERT_BLOB_FILE_PATH " " CL_CERTS_PATH " " SNPHOST_LOG_PIPE; 
+const char *print_attestation_cmd = "xxd " CL_ATTESTATION_FILE_PATH;
 
 static void sprint_string_hex(char* dst, const unsigned char* s, int len){ 
     for(int i = 0; i < len; i++){

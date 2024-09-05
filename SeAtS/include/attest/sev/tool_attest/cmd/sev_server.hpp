@@ -1,7 +1,6 @@
 #ifndef __SERVER_CMD__
 #define __SERVER_CMD__
 
-#include "attest/sev/tool_attest/cmd/common.hpp"
 #include "attest/sev/tool_attest/sev_tool_attest_utils.hpp"
 #include <cstddef>
 
@@ -17,14 +16,15 @@
 #define SNPHOST_IMPORT_CERTS_CMD "snphost import"
 
 // COMMANDS TO RUN ON SERVER
-static const char *snpguest_report_cmd = SNPGUEST_REPORT_CMD " " SR_ATTESTATION_FILE_PATH " " SR_REPORT_DATA_FILE_PATH " " SNPGUEST_LOG_PIPE;
-static const char *snphost_import_cmd = SNPHOST_IMPORT_CERTS_CMD " " SR_CERTS_PATH " " SR_CERT_BLOB_FILE_PATH " " SNPHOST_LOG_PIPE;
-static const char *snpguest_certificates_cmd = SNPGUEST_CERTIFICATES_CMD " pem " SR_CERTS_PATH " " SNPGUEST_LOG_PIPE;
+extern const char *snpguest_report_cmd;
+extern const char *snphost_import_cmd;
+extern const char *snpguest_certificates_cmd;
 
 // INDICATOR IF NEEDED TO FETCH THE CERTS
-static bool CERTS_LOADED = false;
+extern bool CERTS_LOADED;
 
 int load_cert_blob(char **cert_blob_buff, size_t* bufflen);
+int save_report_data_file(char* buff64);
 int get_attestation_report(attestation_report_t* ar);
 
 #endif

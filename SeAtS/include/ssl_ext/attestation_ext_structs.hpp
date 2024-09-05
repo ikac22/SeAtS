@@ -11,6 +11,7 @@ enum AttestationType {
 struct EvidencePayload {
     virtual int serialize(const unsigned char**) = 0;
     virtual int deserialize(const unsigned char *) = 0;
+    virtual ~EvidencePayload() = default;
 };
 
 struct AttestationExtension{
