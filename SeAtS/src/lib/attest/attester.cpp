@@ -12,6 +12,9 @@ void attester::set_cred_kind(CredentialKind cred_kind){
     this->cred_kind = cred_kind;
 }
 
-const EvidencePayload* attester::getResult(){
-    return this->evidence_payload;
+AttestationExtension* attester::getResult(){
+    AttestationExtension* ax = new AttestationExtension();
+    ax->evidence_payload = this->evidence_payload;
+    ax->attestation_type = AMD_SEV_SNP;
+    return ax;
 }

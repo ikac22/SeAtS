@@ -24,7 +24,7 @@ int AttestationExtension::deserialize(const unsigned char* buff){
     tmp += sizeof(AttestationType);
 
     switch (attestation_type) {
-        case AMD_SEV: 
+        case AMD_SEV_SNP: 
             evidence_payload = new SevEvidencePayload();
             tmp += evidence_payload->deserialize(tmp);
             break;

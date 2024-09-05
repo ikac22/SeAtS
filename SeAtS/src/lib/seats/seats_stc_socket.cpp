@@ -1,6 +1,7 @@
 #include "seats/seats_stc_socket.hpp"
 #include "seats/seats_types.hpp"
 #include "ssl_ext/attestation_ext_structs.hpp"
+#include "ssl_ext/evidence_ext_structs.hpp"
 #include "ssl_ext/server_ext_cbs.hpp"
 
 #include <openssl/err.h>
@@ -29,9 +30,11 @@ seats_stc_socket::seats_stc_socket(int sock_fd, struct sockaddr_in addr, socklen
 
 seats_status seats_stc_socket::connect(const char*, int){ return seats_status::CONNECTION_ERROR; }
 
-AttestationExtension* attest(){
-    // TODO: implement
-    return NULL;
+AttestationExtension* seats_stc_socket::attest(EvidenceRequestClient* erq){
+    m_attester->set_data((uint8_t*)erq); 
+    if (m_attester->attest())
+        return NULL;
+    return m_attester->getResult();
 }
 
 seats_status seats_stc_socket::create_context(){ 

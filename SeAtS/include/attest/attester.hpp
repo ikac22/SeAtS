@@ -16,7 +16,7 @@ public:
     virtual void set_cred_kind(CredentialKind cred_kind);
 	virtual void set_data(uint8_t* data) = 0;
 	virtual int attest() = 0;
-	const EvidencePayload* getResult();  
+	AttestationExtension* getResult();  
     virtual int configure_ssl_ctx(SSL_CTX* ctx) = 0;
 protected:
     EvidencePayload* evidence_payload; 

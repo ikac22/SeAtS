@@ -9,7 +9,5 @@ seats::sev_verifier::sev_verifier(): sep(NULL){}
 seats::sev_verifier::~sev_verifier(){ delete sep; }
 
 void seats::sev_verifier::set_data(uint8_t* data){
-    SevEvidencePayload* sep = new SevEvidencePayload();  
-    sep->deserialize((const unsigned char*)data);
-    this->sep = sep;
+    this->sep = (SevEvidencePayload*)data;
 }

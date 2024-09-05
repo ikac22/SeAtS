@@ -20,7 +20,7 @@ public:
     friend int server_certificate_ext_parse_cb(SSL *s, unsigned int ext_type, unsigned int context, const unsigned char *in, size_t inlen, X509 *x, size_t chainidx, int *al, void *parse_arg);
 
 private:
-    seats_status verify(AttestationExtension*);
+    seats_status verify(AttestationExtension*, EVP_PKEY*);
     EvidenceRequestClient* erq;
 
 protected:

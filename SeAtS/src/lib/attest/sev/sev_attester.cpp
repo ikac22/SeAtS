@@ -18,6 +18,7 @@ EVP_PKEY* sev_attester::pkey = NULL;
 sev_attester::sev_attester(): attester::attester(), erq(NULL), kat(NULL), katlen(0){
     if(!pkey) generate_and_save_cert();
 }
+// TODO IMPLEMENT DESTRUctor
 
 int seats::sev_attester::configure_ssl_ctx(SSL_CTX*){ return 0; }
 

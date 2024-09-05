@@ -1,4 +1,6 @@
 #include "seats/seats_client_socket.hpp"
+#include "attest/mock/sev/mock_sev_verifier.hpp"
+#include "seats/seats_types.hpp"
 #include "ssl_ext/attestation_ext_structs.hpp"
 #include "ssl_ext/client_ext_cbs.hpp"
 #include "ssl_ext/evidence_ext_structs.hpp"
@@ -36,10 +38,20 @@ seats_status seats_client_socket::connect(const char* host, int port){
     return seats_socket::connect(host, port); 
 }
 
-seats_status seats_client_socket::verify(AttestationExtension*){
-    
-    return seats_status::NOT_IMPLEMENTED_ERROR;
+seats_status seats_client_socket::verify(AttestationExtension* ax, EVP_PKEY* pkey){
+    mock_sev_verifier sev_verifier; 
+    switch (ax->attestation_type) {
+        case AMD_SEV_SNP:
+            sev_verifier.set_erq(erq);
+            sev_verifier.set_data((uint8_t*)ax->evidence_payload);
+            if(sev_verifier.verify(pkey))
+                return seats_status::FAILED_VERIFICATION;
+            break;
+        default:
+            return seats_status::NOT_IMPLEMENTED_ERROR;
+    } 
  
+    return seats_status::OK;
 };
 
 seats_status seats_client_socket::create_context(){
