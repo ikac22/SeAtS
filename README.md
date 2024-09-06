@@ -22,4 +22,4 @@ Since some of the components on higher abastraction layers it is easy to impleme
 
 ###### Documentation
 1. Add "How to use" section
-
+2. Add explanation how is idea ported on specific platforms (Currently Just AMD-SEV-SNP)
