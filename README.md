@@ -8,7 +8,7 @@ The implementation is not covering everything that draft defines and in some asp
 
 Currently, implementation supports component combinations (Model, Attestation Type, Attestation Creds, Platform): 
 
-    - **Background Check Model, Server Attestation, Only Attestation Credentials, Amd-Sev-Snp**
+- **Background Check Model, Server Attestation, Only Attestation Credentials, Amd-Sev-Snp**
 
 Since some of the components on higher abastraction layers it is easy to implement new combinations of components.
 
