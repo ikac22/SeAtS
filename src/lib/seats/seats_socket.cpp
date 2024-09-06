@@ -10,7 +10,8 @@ using namespace seats;
 
 seats_socket::~seats_socket(){ 
     if(ssl_session){
-        SSL_shutdown(ssl_session);
+        if(SSL_is_init_finished(ssl_session))
+            SSL_shutdown(ssl_session);
         SSL_free(ssl_session);
         ssl_session = NULL;
     }
@@ -87,7 +88,8 @@ int seats_socket::send(const char* data, int datalen){
 
 seats_status seats_socket::close(){
     if(ssl_session){
-        SSL_shutdown(ssl_session);
+        if(SSL_is_init_finished(ssl_session))
+            SSL_shutdown(ssl_session);
         SSL_free(ssl_session);
         ssl_session = NULL;
     }

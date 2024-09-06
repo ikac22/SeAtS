@@ -6,9 +6,8 @@ CXXFLREL= -Wall -Werror -Wextra -O3 -s -Iinclude/ -DNDEBUG
 CXXFLAGSLIB=$(CXXFLAGS)
 CXXFLAGSTST=$(CXXFLAGS) -DRLOG_COMPONENT="seats"
 
-LDFLAGS=
-LDFLAGSLIB=$(LDFLAGS)
-LDFLAGSTST=$(LDFLAGS) -L./target/lib -lseats -lcrypto -lssl
+LDFLAGSLIB=
+LDFLAGSTST=$(LDFLAGSLIB) -L./target/lib -lseats -lcrypto -lssl
 
 OUTDIR=target
 OUTDIRLIB=$(OUTDIR)/lib

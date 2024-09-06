@@ -13,7 +13,7 @@ public:
     seats_client_socket();
 	~seats_client_socket();
 
-	seats_status connect(const char* host, int port);
+	seats_status connect(const char* host, int port) override;
     
     friend int client_hello_ext_add_cb(SSL *s, unsigned int ext_type, unsigned int context, const unsigned char **out, size_t *outlen, X509 *x, size_t chainidx, int *al, void *add_arg);
     friend void client_hello_ext_free_cb(SSL *s, unsigned int ext_type, unsigned int context, const unsigned char *out, void *add_arg);
