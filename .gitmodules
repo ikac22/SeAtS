@@ -1,9 +1,0 @@
-[submodule "test-client-server-openssl/packages/sev-snp-measure"]
-	path = test-client-server-openssl/packages/sev-snp-measure
-	url = https://github.com/virtee/sev-snp-measure
-[submodule "test-client-server-openssl/packages/snpguest"]
-	path = test-client-server-openssl/packages/snpguest
-	url = https://github.com/virtee/snpguest
-[submodule "test-client-server-openssl/packages/snphost"]
-	path = test-client-server-openssl/packages/snphost
-	url = https://github.com/virtee/snphost
