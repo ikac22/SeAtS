@@ -28,6 +28,12 @@ SSL_CTX* seats_socket::get_ssl_context(){
 }
 
 seats_status seats_socket::connect(const char* host, int port){ 
+    socket_handle = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_handle < 0) {
+        perror("Unable to create socket");
+        return seats_status::UNABLE_TO_CREATE_SOCKET;
+    }
+
     seats_status result = seats_status::OK;
  
     addr.sin_family = AF_INET;
@@ -94,8 +100,10 @@ seats_status seats_socket::close(){
         ssl_session = NULL;
     }
    
-    if(socket_handle > 0)
-        ::shutdown(socket_handle, SHUT_RDWR);
+    if(socket_handle > 0){
+        ::close(socket_handle);
+        socket_handle = -1;
+    }
 
     return seats_status::OK;
 }

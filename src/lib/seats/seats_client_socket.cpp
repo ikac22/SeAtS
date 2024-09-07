@@ -25,7 +25,6 @@ seats_client_socket::seats_client_socket(){
     
     erq->supported_evidence_types.push_back(et);
 
-    leave_if_true(status = create_socket());
     leave_if_true(status = create_context());
 }
 
