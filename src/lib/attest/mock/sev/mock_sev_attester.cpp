@@ -3,10 +3,18 @@
 #include "attest/mock/sev/mock_sev_common.hpp"
 #include "attest/sev/sev_attester.hpp"
 #include "attest/sev/sev_structs.hpp"
+#include "ssl_ext/log.hpp"
 #include <cstdlib>
+#include <openssl/ssl.h>
 #include <string.h>
 
+
 seats::mock_sev_attester::mock_sev_attester(): sev_attester(){}
+
+int seats::mock_sev_attester::configure_ssl_ctx(SSL_CTX* ctx){
+    SSL_CTX_set_keylog_callback(ctx, SSL_keylog_cb);
+    return seats::sev_attester::configure_ssl_ctx(ctx);
+}
 
 int seats::mock_sev_attester::attest(){ 
     SevEvidencePayload* sep = (SevEvidencePayload*) evidence_payload;

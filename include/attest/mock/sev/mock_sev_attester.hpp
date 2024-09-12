@@ -16,6 +16,7 @@ public:
 	~mock_sev_attester() = default;
 	// virtual void set_data(uint8_t* data) override;
 	virtual int attest() override;
+    virtual int configure_ssl_ctx(SSL_CTX* ctx) override;
 };
 
 }

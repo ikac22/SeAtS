@@ -24,6 +24,7 @@ seats_stc_socket::seats_stc_socket(int sock_fd, struct sockaddr_in addr, socklen
     leave_if_true(status = create_context());
     if(this->m_attester->configure_ssl_ctx(this->ssl_context)){
         status = seats_status::UNABLE_TO_CONFIGURE_SSL_CONTEXT;
+        return;
     }
     leave_if_true(status = create_secure_socket());
 }
