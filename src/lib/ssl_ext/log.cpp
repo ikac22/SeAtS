@@ -1,6 +1,6 @@
 #include "ssl_ext/log.hpp"
 
-void SSL_keylog_cb(const SSL *ssl, const char *line){
+void SSL_keylog_cb(const SSL *, const char *line){
     FILE  * fp;
     fp = fopen("key_log.log", "a");
     if (fp == NULL)
