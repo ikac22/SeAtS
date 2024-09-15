@@ -22,11 +22,13 @@ extern const char *snpguest_certs_cmd;
 extern const char *snpguest_attestation_cmd;
 extern const char *snphost_export_cmd;
 extern const char *print_attestation_cmd;
+extern bool CERTS_SAVED;
+extern bool MEASUREMEN_CALCULATED;
 
 int verify_sev_snp_certs();
-int verify_measurement(char* measurement);
-int verify_attestation_signature();
-int save_attestation(attestation_report_t *ar);
+int verify_measurement(char* measurement, size_t nonce);
+int verify_attestation_signature(char* filename);
+int save_attestation(attestation_report_t *ar, char** filename, size_t nonce);
 int save_certs(const unsigned char* certs_blob, size_t length);
 
 #endif

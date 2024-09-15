@@ -24,7 +24,7 @@ extern const char *snpguest_certificates_cmd;
 extern bool CERTS_LOADED;
 
 int load_cert_blob(char **cert_blob_buff, size_t* bufflen);
-int save_report_data_file(char* buff64);
-int get_attestation_report(attestation_report_t* ar);
+int save_report_data_file(char* buff64, char** filename, size_t nonce);
+int get_attestation_report(attestation_report_t* ar, char* rd_filename, size_t nonce);
 
 #endif

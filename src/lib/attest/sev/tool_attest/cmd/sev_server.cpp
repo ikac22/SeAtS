@@ -2,8 +2,10 @@
 #include "attest/sev/tool_attest/cmd/sev_server.hpp"
 #include "attest/sev/tool_attest/sev_tool_attest_utils.hpp"
 #include <cstddef>
+#include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 
 
 const char *snpguest_report_cmd = SNPGUEST_REPORT_CMD " " SR_ATTESTATION_FILE_PATH " " SR_REPORT_DATA_FILE_PATH " " SNPGUEST_LOG_PIPE;
@@ -49,23 +51,33 @@ int load_cert_blob(char **cert_blob_buff, size_t* bufflen){
     
 }
 
-int save_report_data_file(char* buff64){
-    FILE* report_data_file = fopen(SR_REPORT_DATA_FILE_PATH, "wb");
+int save_report_data_file(char* buff64, char** filename, size_t nonce){
+    std::string fname = std::string(SR_REPORT_DATA_FILE_PATH "_") + std::to_string(nonce);
+    *filename = new char[fname.length() + 1];
+    strcpy(*filename, fname.c_str());
+
+    FILE* report_data_file = fopen(*filename, "wb");
     fwrite(buff64, 1, 64, report_data_file);
     fclose(report_data_file);
     return true;
 }
 
-int get_attestation_report(attestation_report_t* ar){
+int get_attestation_report(attestation_report_t* ar, char* rd_filename, size_t nonce){
+    std::string fname = std::string(SR_ATTESTATION_FILE_PATH "_") + std::to_string(nonce);
+    std::string command = std::string(SNPGUEST_REPORT_CMD " ") + fname + " " + std::string(rd_filename) + SNPGUEST_LOG_PIPE;
+    
     FILE *att_file;
  
-    system(snpguest_report_cmd);
+    system(command.c_str());
 
-    att_file = fopen(SR_ATTESTATION_FILE_PATH, "rb");
+    att_file = fopen(fname.c_str(), "rb");
 
     fread((char*)ar, sizeof(attestation_report_t), 1, att_file);
 
     fclose(att_file);
+
+    // TODO: DELETE ATTESTATION FILE
+    // TODO: DELETE REPORT DATA
 
     return 1;
 }
