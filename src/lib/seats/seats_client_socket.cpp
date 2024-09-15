@@ -1,5 +1,6 @@
 #include "seats/seats_client_socket.hpp"
-#include "attest/mock/sev/mock_sev_verifier.hpp"
+// #include "attest/mock/sev/mock_sev_verifier.hpp"
+#include "attest/sev/tool_attest/sev_tool_verifier.hpp"
 #include "seats/seats_types.hpp"
 #include "ssl_ext/attestation_ext_structs.hpp"
 #include "ssl_ext/client_ext_cbs.hpp"
@@ -38,12 +39,13 @@ seats_status seats_client_socket::connect(const char* host, int port){
 }
 
 seats_status seats_client_socket::verify(AttestationExtension* ax, EVP_PKEY* pkey){
-    mock_sev_verifier sev_verifier; 
+    sev_tool_verifier sev_verifier_tmp;
+    // mock_sev_verifier sev_verifier; 
     switch (ax->attestation_type) {
         case AMD_SEV_SNP:
-            sev_verifier.set_erq(erq);
-            sev_verifier.set_data((uint8_t*)ax->evidence_payload);
-            if(sev_verifier.verify(pkey))
+            sev_verifier_tmp.set_erq(erq);
+            sev_verifier_tmp.set_data((uint8_t*)ax->evidence_payload);
+            if(sev_verifier_tmp.verify(pkey))
                 return seats_status::FAILED_VERIFICATION;
             break;
         default:

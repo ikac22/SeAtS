@@ -79,8 +79,8 @@ seats_status seats_server_socket::create_socket(uint port){
 }
 
 seats_status seats_server_socket::create_attester(){
-    // m_attester = new sev_tool_attester();
-    m_attester = new mock_sev_attester();
+    m_attester = new sev_tool_attester();
+    // m_attester = new mock_sev_attester();
     return seats_status::OK;
 }
 

@@ -6,7 +6,7 @@
 
 namespace seats{
 
-class sev_tool_verifier: sev_verifier{
+class sev_tool_verifier:public sev_verifier{
 public:
     sev_tool_verifier();
 	void set_data(uint8_t* data) override;
