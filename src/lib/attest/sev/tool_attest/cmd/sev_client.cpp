@@ -56,6 +56,7 @@ int verify_attestation_signature(char* filename) {
 
 int verify_measurement(char* measurement, size_t nonce){
     std::string fname = std::string(CL_CALCULATED_ATTESTATION_FILE_PATH "_") + std::to_string(nonce);
+    std::string command = std::string(CL_CALCULATE_MEASUREMENT_SCRIPT_PATH " > ") + fname;
     char calc_measurement[96];
     char got_measurement[96];
 
