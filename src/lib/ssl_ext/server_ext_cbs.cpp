@@ -21,6 +21,7 @@ int seats::server_certificate_ext_add_cb(SSL *, unsigned int,
     if(chainidx == 0){
         seats::seats_stc_socket* ss = (seats::seats_stc_socket*)add_arg;
         AttestationExtension* ax = ss->attest();
+        printf("Serializing attestation extension.\n");
         *outlen = ax->serialize(out);
         delete ax;
     }
