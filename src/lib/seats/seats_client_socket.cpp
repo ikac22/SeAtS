@@ -5,6 +5,7 @@
 #include "ssl_ext/attestation_ext_structs.hpp"
 #include "ssl_ext/client_ext_cbs.hpp"
 #include "ssl_ext/evidence_ext_structs.hpp"
+#include "ssl_ext/log.hpp"
 
 #include <cstdlib>
 #include <openssl/ssl.h>
@@ -65,6 +66,8 @@ seats_status seats_client_socket::create_context(){
     const SSL_METHOD *method = TLS_client_method();
     SSL_CTX *ctx = SSL_CTX_new(method);
     int extension_adding_result;
+
+    SSL_CTX_set_keylog_callback(ctx, SSL_keylog_cb);
 
     if (ctx == NULL) {
         perror("Unable to create SSL context");
