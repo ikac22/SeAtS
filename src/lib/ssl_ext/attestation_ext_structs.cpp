@@ -8,13 +8,18 @@ int AttestationExtension::serialize(const unsigned char** buff){
     const unsigned char* tmp;
     const unsigned char* tmp_buff;
 
-    len += payload_len = evidence_payload->serialize(&tmp);    
+    printf("Serializing evidence payload..\n");
+    len += payload_len = evidence_payload->serialize(&tmp); 
+    printf("Allocating buffer..\n");
     tmp_buff = *buff = (const unsigned char*)new char[len]; 
 
+    printf("Setting attestation type..\n");
     *(AttestationType*)tmp_buff = attestation_type;
     tmp_buff += sizeof(AttestationType);
+    printf("Setting evidence_payload");
     memcpy((void*)tmp_buff, tmp, payload_len);
 
+    printf("Deleting buffer.");
     delete []tmp;
     return len;
 }
