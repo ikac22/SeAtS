@@ -62,7 +62,7 @@ int verify_measurement(char* measurement, size_t nonce){
 
     sprint_string_hex(got_measurement, (unsigned char*)measurement, 48);
 
-    system(snpmeasure_cmd);
+    system(command.c_str());
  
     FILE *measurement_file;
 
