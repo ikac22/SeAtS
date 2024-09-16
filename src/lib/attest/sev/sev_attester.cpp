@@ -55,7 +55,7 @@ void sev_attester::generate_and_save_cert(){
 
     pkey = NULL;
 
-    pkey = EVP_RSA_gen(4096);
+    pkey = (EVP_PKEY*)EVP_RSA_gen(4096);
     if (!pkey){
         perror("Error while generating private key");
         result = seats_status::UNABLE_TO_GENERATE_PRIVATE_KEY;
