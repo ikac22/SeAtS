@@ -12,6 +12,7 @@ namespace seats{
 
 class attester{
 public:
+    attester();
 	virtual ~attester();
     virtual void set_cred_kind(CredentialKind cred_kind);
 	virtual void set_data(uint8_t* data) = 0;

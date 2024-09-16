@@ -4,6 +4,9 @@
 
 using namespace seats;
 
+attester::attester(): evidence_payload(NULL), cred_kind(CredentialKind::ATTESTATION){
+}
+
 attester::~attester(){
     if(evidence_payload) delete evidence_payload;
 }
