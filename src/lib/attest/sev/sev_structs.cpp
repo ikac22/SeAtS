@@ -174,23 +174,28 @@ int SevEvidencePayload::serialize(const unsigned char** buff){
         + amd_cert_data_len 
         + sizeof(siglen)
         + siglen;   
-
+    printf("Allocating buff..\n");
     *buff = (const unsigned char*)new char[len];
 
     char* tmp = (char*)*buff;
 
+    printf("Setting attestation report..\n");
     *(attestation_report_t*)tmp = attestation_report;
     tmp += sizeof(attestation_report_t);
     
+    printf("Setting cert len..\n");
     *(uint64_t*)tmp = amd_cert_data_len;
     tmp += sizeof(amd_cert_data_len);
 
+    printf("Setting cert data..\n");
     memcpy(tmp, (const void*)amd_cert_data, amd_cert_data_len);
     tmp += amd_cert_data_len;
  
+    printf("Setting signature len..\n");
     *(size_t*)tmp = siglen;
     tmp += sizeof(siglen);
 
+    printf("Setting signature..\n");
     memcpy(tmp, (const void*)sig, siglen);
     tmp += siglen;
 
