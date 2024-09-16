@@ -18,8 +18,11 @@ int seats::sev_tool_verifier::verify(EVP_PKEY* pkey){
     int result = 0;
     char* att_filename = NULL;
 
+    printf("Saving attestation...\n");
     save_attestation(&(this->sep->attestation_report), &att_filename, this->erq->nonce);
+
     if(!CERTS_SAVED){
+        printf("Saving certs...\n");
         save_certs((const unsigned char*)this->sep->amd_cert_data, this->sep->amd_cert_data_len);
         CERTS_SAVED = true;
     }
