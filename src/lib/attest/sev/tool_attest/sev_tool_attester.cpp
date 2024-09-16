@@ -42,5 +42,7 @@ int seats::sev_tool_attester::attest(){
     printf("saving and getting attestation report\n");
     get_attestation_report(&(sep->attestation_report), report_data_filename, this->erq->nonce); 
 
+    printf("finished with adding extension.");
+
     return true; 
 }
