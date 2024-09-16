@@ -143,7 +143,7 @@ void sev_attester::generate_and_save_cert(){
     
     if (!PEM_write_PrivateKey(
             f,                  /* write the key to the file we've opened */
-            (const EVP_PKEY*)pkey,               /* our key from earlier */
+            pkey,               /* our key from earlier */
             NULL, /* default cipher for encrypting the key on disk */
             NULL,       /* passphrase required for decrypting the key on disk */
             10,                 /* length of the passphrase string */
