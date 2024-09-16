@@ -5,7 +5,16 @@
 #include <cstdlib>
 #include <string.h>
 
-seats::sev_tool_attester::sev_tool_attester(): sev_attester(){}
+seats::sev_tool_attester::sev_tool_attester(): sev_attester(){
+    SevEvidencePayload* sep = (SevEvidencePayload*)evidence_payload;
+
+    if (!CERTS_LOADED){
+        system(snpguest_certificates_cmd);
+        system(snphost_import_cmd);
+        CERTS_LOADED=true;
+        load_cert_blob(&(sep->amd_cert_data), &(sep->amd_cert_data_len));
+    } 
+}
 
 int seats::sev_tool_attester::attest(){ 
     SevEvidencePayload* sep = (SevEvidencePayload*) evidence_payload;
@@ -19,12 +28,6 @@ int seats::sev_tool_attester::attest(){
 
     memset(buff64, 0, 64);
 
-    if (!CERTS_LOADED){
-        system(snpguest_certificates_cmd);
-        system(snphost_import_cmd);
-        CERTS_LOADED=true;
-        load_cert_blob(&(sep->amd_cert_data), &(sep->amd_cert_data_len));
-    } 
 
     memcpy(buff64, kat, katlen);
    
@@ -32,7 +35,7 @@ int seats::sev_tool_attester::attest(){
     
     save_report_data_file(buff64, &report_data_filename, this->erq->nonce);
 
-    get_attestation_report(&(sep->attestation_report), report_data_filename); 
+    get_attestation_report(&(sep->attestation_report), report_data_filename, this->erq->nonce); 
 
     return true; 
 }

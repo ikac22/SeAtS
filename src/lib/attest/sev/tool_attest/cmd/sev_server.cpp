@@ -76,8 +76,8 @@ int get_attestation_report(attestation_report_t* ar, char* rd_filename, size_t n
 
     fclose(att_file);
 
-    // TODO: DELETE ATTESTATION FILE
-    // TODO: DELETE REPORT DATA
+    std::remove(fname.c_str());
+    std::remove(rd_filename);
 
     return 1;
 }

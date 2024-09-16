@@ -17,17 +17,18 @@ EVP_PKEY* sev_attester::pkey = NULL;
 
 sev_attester::sev_attester(): attester::attester(), erq(NULL), kat(NULL), katlen(0){
     if(!pkey) generate_and_save_cert();
+
+    if(!evidence_payload){ 
+        evidence_payload = new SevEvidencePayload();
+        ((SevEvidencePayload*)evidence_payload)->pkey = pkey;
+        ((SevEvidencePayload*)evidence_payload)->sig = NULL;
+    }
 }
 // TODO IMPLEMENT DESTRUctor
 
 int seats::sev_attester::configure_ssl_ctx(SSL_CTX*){ return 0; }
 
 void seats::sev_attester::set_data(uint8_t* data){
-    if(!evidence_payload){ 
-        evidence_payload = new SevEvidencePayload();
-        ((SevEvidencePayload*)evidence_payload)->pkey = pkey;
-        ((SevEvidencePayload*)evidence_payload)->sig = NULL;
-    }
     SevEvidencePayload* sep = (SevEvidencePayload*)evidence_payload;
 
     if(kat) delete []kat;

@@ -13,7 +13,7 @@
 
 using namespace seats;
 
-seats_server_socket::seats_server_socket(uint port){
+seats_server_socket::seats_server_socket(uint port, bool mock_t):mock(mock_t){
     leave_if_true(status = create_attester());
     leave_if_true(status = create_socket(port));
 }
@@ -79,7 +79,12 @@ seats_status seats_server_socket::create_socket(uint port){
 }
 
 seats_status seats_server_socket::create_attester(){
-    m_attester = new sev_tool_attester();
+    if (!mock){
+        m_attester = new sev_tool_attester();
+    }
+    else{
+        m_attester = new mock_sev_attester();
+    }
     // m_attester = new mock_sev_attester();
     return seats_status::OK;
 }

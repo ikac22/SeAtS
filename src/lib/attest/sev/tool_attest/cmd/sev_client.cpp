@@ -79,6 +79,8 @@ int verify_measurement(char* measurement, size_t nonce){
 
     fclose(measurement_file);
 
+    std::remove(fname.c_str());
+
     return true;
 }
 

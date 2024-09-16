@@ -10,7 +10,7 @@ namespace seats{
 
 class seats_client_socket: public seats_socket{	
 public:
-    seats_client_socket();
+    seats_client_socket(bool mock_t = false);
 	~seats_client_socket();
 
 	seats_status connect(const char* host, int port) override;
@@ -20,6 +20,7 @@ public:
     friend int server_certificate_ext_parse_cb(SSL *s, unsigned int ext_type, unsigned int context, const unsigned char *in, size_t inlen, X509 *x, size_t chainidx, int *al, void *parse_arg);
 
 private:
+    bool mock;
     seats_status verify(AttestationExtension*, EVP_PKEY*);
     EvidenceRequestClient* erq;
 

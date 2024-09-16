@@ -10,7 +10,7 @@ namespace seats{
 
 class seats_server_socket{	
 public:
-    seats_server_socket(uint port);
+    seats_server_socket(uint port, bool mock_t = false);
     ~seats_server_socket();
     seats_socket* accept();
     seats_status get_status();
@@ -18,6 +18,7 @@ private:
     seats_status create_socket(uint port);
     seats_status create_attester();
 
+    bool mock;
     seats_status status;
     int socket_handle;
     struct sockaddr_in addr;
