@@ -24,6 +24,7 @@ int seats::server_certificate_ext_add_cb(SSL *, unsigned int,
         printf("Serializing attestation extension.\n");
         *outlen = ax->serialize(out);
         delete ax;
+        printf("Serialized and deleted.\n");
     }
     return 1;
 }
