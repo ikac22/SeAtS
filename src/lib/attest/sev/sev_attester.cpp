@@ -18,11 +18,9 @@ EVP_PKEY* sev_attester::pkey = NULL;
 sev_attester::sev_attester(): attester::attester(), erq(NULL), kat(NULL), katlen(0){
     if(!pkey) generate_and_save_cert();
 
-    if(!evidence_payload){ 
-        evidence_payload = new SevEvidencePayload();
-        ((SevEvidencePayload*)evidence_payload)->pkey = pkey;
-        ((SevEvidencePayload*)evidence_payload)->sig = NULL;
-    }
+    evidence_payload = new SevEvidencePayload();
+    ((SevEvidencePayload*)evidence_payload)->pkey = pkey;
+    ((SevEvidencePayload*)evidence_payload)->sig = NULL;
 }
 // TODO IMPLEMENT DESTRUctor
 

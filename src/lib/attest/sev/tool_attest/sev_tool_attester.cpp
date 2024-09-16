@@ -44,5 +44,5 @@ int seats::sev_tool_attester::attest(){
 
     printf("finished with adding extension.");
 
-    return true; 
+    return false; 
 }
